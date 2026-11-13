@@ -255,9 +255,9 @@ body{{font-family:Inter,Arial,sans-serif;color:{C['text']};-webkit-font-smoothin
 .pill{{border-radius:9px;color:#fff;font-family:Archivo;font-stretch:112%;font-weight:800;letter-spacing:.04em;text-align:center;text-transform:uppercase;white-space:nowrap;display:flex;align-items:center;justify-content:center;gap:8px}}
 .card{{background:{C['panel']};border:1px solid {C['border']};border-radius:14px;padding:16px 18px}}
 .card.tint{{background:{C['panel2']}}}
-.node{{background:{C['panel']};border:1.5px solid {C['line']};border-radius:12px;padding:10px 12px;font-size:14px;line-height:1.35;z-index:2;display:flex;flex-direction:column;justify-content:center}}
-.node>b{{font-family:Archivo;font-stretch:110%;font-weight:800;font-size:15px;letter-spacing:.01em;display:flex;align-items:center;gap:7px}}
-.node small{{color:{C['muted']};font-size:12.5px;line-height:1.35;display:block;margin-top:3px}}
+.node{{background:{C['panel']};border:1.5px solid {C['line']};border-radius:12px;padding:10px 12px;font-size:16px;line-height:1.35;z-index:2;display:flex;flex-direction:column;justify-content:center}}
+.node>b{{font-family:Archivo;font-stretch:110%;font-weight:800;font-size:17px;letter-spacing:.01em;display:flex;align-items:center;gap:7px}}
+.node small{{color:{C['muted']};font-size:14.5px;line-height:1.35;display:block;margin-top:3px}}
 .node.hot{{border-color:{C['pink']}}}
 .node.blue{{border-color:{C['blue']}}}
 .node.violet{{border-color:{C['violet']}}}
@@ -268,12 +268,12 @@ body{{font-family:Inter,Arial,sans-serif;color:{C['text']};-webkit-font-smoothin
 .node.pinkfill{{background:{C['magenta']};border-color:{C['magenta']}}}
 .node.pinkfill small{{color:#ffe3f3}}
 .h2{{font-family:Archivo;font-stretch:115%;font-weight:850;font-size:18px;letter-spacing:.03em;text-transform:uppercase;color:{C['text']}}}
-.h3{{font-family:Archivo;font-stretch:110%;font-weight:800;font-size:15px;letter-spacing:.02em;color:{C['text']}}}
-.p{{font-size:14.5px;line-height:1.5;color:{C['text']}}}
+.h3{{font-family:Archivo;font-stretch:110%;font-weight:800;font-size:17px;letter-spacing:.02em;color:{C['text']}}}
+.p{{font-size:16.5px;line-height:1.5;color:{C['text']}}}
 .m{{color:{C['muted']}}}
-.s{{font-size:13px;line-height:1.45}}
-.xs{{font-size:12px;line-height:1.4}}
-ul.b{{list-style:none;font-size:14px;line-height:1.45}}
+.s{{font-size:15.5px;line-height:1.45}}
+.xs{{font-size:14px;line-height:1.4}}
+ul.b{{list-style:none;font-size:16px;line-height:1.45}}
 ul.b li{{position:relative;padding-left:16px;margin:0 0 6px}}
 ul.b li:before{{content:"";position:absolute;left:2px;top:8px;width:6px;height:6px;border-radius:50%;background:{C['pink']}}}
 ul.b.blue li:before{{background:{C['blue']}}}

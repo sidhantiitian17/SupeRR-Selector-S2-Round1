@@ -95,13 +95,13 @@ def s_problem(n):
     for i, (name, ic, probs, needs) in enumerate(stages):
         x = x0 + i * (cw + gap)
         b.append(pill(x, 150, cw, name, C["jersey"], 40, 15))
-        b.append(box(x + cw / 2 - 42, 205, 84, 84, f'<div style="width:84px;height:84px;border-radius:50%;background:{C["panel2"]};border:2px solid {C["pink"]};display:grid;place-items:center">{icon(ic, 40, C["pink"], 1.8)}</div>'))
-        b.append(pill(x + 30, 306, cw - 60, "KEY PROBLEMS", C["magenta"], 28, 12.5))
-        b.append(box(x + 6, 342, cw - 10, 0, "<ul class='b bad'>" + "".join(f"<li>{p}</li>" for p in probs) + "</ul>"))
-        b.append(pill(x + 30, 438, cw - 60, "NEEDS", C["jersey"], 28, 12.5))
-        b.append(box(x + 6, 472, cw - 10, 0, "<ul class='b good'>" + "".join(f"<li>{p}</li>" for p in needs) + "</ul>"))
+        b.append(box(x + cw / 2 - 28, 198, 56, 56, f'<div style="width:56px;height:56px;border-radius:50%;background:{C["panel2"]};border:2px solid {C["pink"]};display:grid;place-items:center">{icon(ic, 28, C["pink"], 1.8)}</div>'))
+        b.append(pill(x + 30, 266, cw - 60, "KEY PROBLEMS", C["magenta"], 28, 12.5))
+        b.append(box(x + 6, 300, cw - 10, 0, "<ul class='b bad' style='font-size:15px;line-height:1.4'>" + "".join(f"<li>{p}</li>" for p in probs) + "</ul>"))
+        b.append(pill(x + 30, 414, cw - 60, "NEEDS", C["jersey"], 28, 12.5))
+        b.append(box(x + 6, 448, cw - 10, 0, "<ul class='b good' style='font-size:15px;line-height:1.4'>" + "".join(f"<li>{p}</li>" for p in needs) + "</ul>"))
         if i:
-            b.append(box(x - gap / 2 - 1, 210, 2, 318, "", "", f"background:{C['line']}"))
+            b.append(box(x - gap / 2 - 1, 200, 2, 350, "", "", f"background:{C['line']}"))
     # bottom left: why raw numbers mislead (two identical sixes)
     b.append(card(34, 566, 900, 286, ""))
     b.append(pill(54, 580, 330, "WHY RAW NUMBERS MISLEAD", C["magenta"], 32, 14))
@@ -110,7 +110,7 @@ def s_problem(n):
     g.node("a", 60, 628, 250, 92, f'<b>{icon("ball", 16, BAT)} Six, last over of a chase</b><small>Need {ex["need"]} off {ex["left"]}; win probability {ex["wp"]:.0%} → {ex["wpa"]:.0%}</small>', "node hot")
     g.node("b", 60, 740, 250, 92, f'<b>{icon("ball", 16, C["faint"])} Six, 10th over, 80 runs ahead</b><small>Win probability hardly moves</small>', "node")
     g.node("raw", 380, 686, 190, 84, '<b>Raw stats</b><small>Both = 6 runs, same strike-rate boost</small>', "node")
-    g.node("ours", 640, 628, 270, 92, '<b>Our rating: high-pressure ball</b><small>Counted in the pressure sample, valued vs an average player in that exact state</small>', "node hot")
+    g.node("ours", 640, 624, 270, 108, '<b>Our rating: high-pressure ball</b><small>Counted in the pressure sample, valued vs an average player in that exact state</small>', "node hot")
     g.node("ours2", 640, 740, 270, 92, '<b>Our rating: routine ball</b><small>Counts toward the player\'s usual level, not pressure</small>', "node")
     g.edge("a", "raw", "r", "l", tb=0.3).edge("b", "raw", "r", "l", tb=0.7)
     g.edge("a", "ours", color=C["pink"], label="leverage high").edge("b", "ours2", color=C["faint"], label="leverage low", lab_dy=18)
@@ -430,7 +430,7 @@ def s_recipes(n):
             g.node("B", x0 + 260, 520, 210, 92, f'<b>{icon("zap", 15, SB)} B strike-rate ensemble</b><small>no shrinkage</small>', "node violet")
             g.edge("A", "F", "l", "r", tb=0.3, color=SA, label="× 0.67").edge("B", "F", "l", "r", tb=0.7, color=SB, label="× 0.33")
             for i, (k, t1, t2, w) in enumerate([("a1", "Pressure rating", "runs above expected, 50/50 direct + hierarchical", "0.51"), ("a2", "Uplift", "pressure level − own usual level", "0.15"), ("a3", "Consistency", "share of pressure matches with a top-quartile contribution", "0.34")]):
-                g.node(k, x0 + 530, 160 + i * 98, 210, 84, f'<b style="justify-content:space-between">{t1} {chip("× " + w, SA, True)}</b><small>{t2}</small>', "node")
+                g.node(k, x0 + 530, 156 + i * 100, 210, 92, f'<b style="justify-content:space-between">{t1} {chip("× " + w, SA, True)}</b><small>{t2}</small>', "node")
                 g.edge(k, "A", "l", "r", tb=0.2 + i * 0.3)
             for i, (k, t1, t2) in enumerate([("b1", "SR at leverage pct 75+", "top quarter of balls in each innings"), ("b2", "SR at leverage pct 85+", "top 15%")]):
                 g.node(k, x0 + 530, 470 + i * 104, 210, 88, f'<b>{t1}</b><small>{t2}</small>', "node")
@@ -443,7 +443,7 @@ def s_recipes(n):
             for i, (k, t1, t2, w, cc) in enumerate([("a1", "A pressure rating", "runs saved vs expected, shrunk", "0.2", SA), ("b1", "B economy", "runs per ball at leverage pct 70+, shrunk (k = 500)", "", SB), ("b2", "B win prob. added", "per ball at pct 70+, shrunk; with economy = B (× 0.8)", "", SB)]):
                 g.node(k, x0 + 530, 150 + i * 102, 210, 88, f'<b style="justify-content:space-between">{t1} {chip("× " + w, cc, True) if w else ""}</b><small>{t2}</small>', "node", f"border-color:{cc}")
                 g.edge(k, "H", "l", "r", tb=0.2 + i * 0.3, color=cc)
-            g.node("gate", x0 + 530, 500, 210, 120, f'<b>{icon("lock", 15, C["warn"])} Delivered gate</b><small>a bowler whose observed pressure value is below league average cannot rank above one who delivered</small>', "node", f"border-color:{C['warn']}")
+            g.node("gate", x0 + 530, 494, 210, 132, f'<b>{icon("lock", 15, C["warn"])} Delivered gate</b><small>a bowler whose observed pressure value is below league average cannot rank above one who delivered</small>', "node", f"border-color:{C['warn']}")
             g.edge("gate", "U", "l", "r", dash=True, color=C["warn"])
         b.append(g.render())
     b.append(card(34, 712, 1532, 140, ""))
@@ -459,10 +459,10 @@ def top_slide(n, role):
     c = BAT if role == "bat" else BOWL
     b = []
     b.append(box(34, 90, 1530, 0, f'<div class="xs m">Official order (FINAL_TOP10_HYBRID.csv). Pressure = highest-leverage balls (leverage pct {"75" if role == "bat" else "70"}+), as in the report\'s evidence table. {chip("P(top 10)", c, True)} share of 300 resamples · <b>specs</b> = alternative specifications agreeing.</div>'))
-    cw, chh = 296, 350
+    cw, chh = 296, 358
     for i, r in enumerate(rows):
         row, col = divmod(i, 5)
-        x = 34 + col * (cw + 12); y = 118 + row * (chh + 10)
+        x = 34 + col * (cw + 12); y = 116 + row * (chh + 6)
         prof = PROF[r["player"]]
         if role == "bat":
             a, u, lab, better = r["P SR"], r["usual SR"], "strike rate", r["P SR"] >= r["usual SR"]
@@ -677,19 +677,19 @@ def s_repro(n):
     b = []
     for i, (url, ic, a, s_) in enumerate(((LIVE, "globe", "Live dashboard (Vercel)", "explore every player, this deck is embedded under Reproduce"), (GITHUB, "github", "GitHub repository", "raw data, pipeline, outputs, dashboard, this deck"))):
         x = 34 + i * 520
-        b.append(card(x, 96, 504, 250, f'<div style="display:flex;gap:18px"><div style="border-radius:12px;overflow:hidden;flex:none">{qr_svg(url, 150)}</div><div><div class="h3" style="font-size:18px">{icon(ic, 19, C["pink"])} {a}</div><div class="s m" style="margin-top:6px">{s_}</div><div class="mono xs" style="margin-top:14px;word-break:break-all;color:{C["pink"]}"><a href="{url}">{short(url)}</a></div></div></div>'))
-    b.append(card(1074, 96, 492, 250, ""))
+        b.append(card(x, 96, 504, 240, f'<div style="display:flex;gap:18px"><div style="border-radius:12px;overflow:hidden;flex:none">{qr_svg(url, 150)}</div><div><div class="h3" style="font-size:18px">{icon(ic, 19, C["pink"])} {a}</div><div class="s m" style="margin-top:6px">{s_}</div><div class="mono xs" style="margin-top:14px;word-break:break-all;color:{C["pink"]}"><a href="{url}">{short(url)}</a></div></div></div>'))
+    b.append(card(1074, 96, 492, 240, ""))
     b.append(pill(1094, 112, 300, "VERIFIED", C["good"], 32, 14, "check"))
     b.append(box(1094, 160, 456, 0, '<ul class="b good"><li class="p">Clean clone + rerun: all 40 data files, tables and figures identical; report text identical on all 10 pages.</li><li class="p">Dashboard: 10,172 checks recomputed from the pipeline, 0 failed.</li><li class="p">Seed 42, pinned package versions.</li></ul>'))
     steps = [("1", "Clone", "git clone …/SupeRR-Selector-S2-Round1"), ("2", "Install", "pip install -r requirements.txt"), ("3", "Run", "./reproduce.sh  (≈45–60 min)"), ("4", "Check", "FINAL_TOP10_HYBRID.csv + '0 failed'"), ("5", "Explore", "open dashboard/dist/…html")]
     g = Graph()
     for i, (k, a, cmd) in enumerate(steps):
-        g.node(f"r{i}", 34 + i * 310, 380, 282, 120, f'<b>{icon("play" if i == 2 else "code", 16, C["pink"])} {k} · {a}</b><small class="mono" style="color:{C["text"]};font-size:12.5px;margin-top:8px">{cmd}</small>', "node hot" if i == 2 else "node")
+        g.node(f"r{i}", 34 + i * 310, 354, 282, 108, f'<b>{icon("play" if i == 2 else "code", 16, C["pink"])} {k} · {a}</b><small class="mono" style="color:{C["text"]};font-size:12.5px;margin-top:8px">{cmd}</small>', "node hot" if i == 2 else "node")
         if i:
             g.edge(f"r{i - 1}", f"r{i}")
     b.append(g.render())
-    b.append(card(34, 520, 760, 332, ""))
-    b.append(pill(54, 536, 260, "REPOSITORY LAYOUT", C["jersey"], 32, 14))
+    b.append(card(34, 478, 760, 374, ""))
+    b.append(pill(54, 494, 260, "REPOSITORY LAYOUT", C["jersey"], 32, 14))
     tree = """README.md            step-by-step guide
 reproduce.sh         one command, end to end
 requirements.txt     pinned versions
@@ -698,12 +698,12 @@ pipeline/src/        config.py, s01 … s09
 pipeline/outputs/    parquet, CSVs, figures, report
 dashboard/           source, data, verifier, dist/
 deck/                this presentation (HTML, PDF, PPTX)"""
-    b.append(box(54, 584, 720, 0, f'<pre class="mono" style="font-size:14px;line-height:1.6;color:{C["text"]}">{esc(tree)}</pre>'))
-    b.append(card(810, 520, 756, 332, ""))
-    b.append(pill(830, 536, 300, "ONLY THE DASHBOARD?", C["jersey"], 32, 14))
-    b.append(box(830, 584, 716, 0, f'<pre class="mono" style="font-size:14px;line-height:1.7;background:{C["bg"]};border-radius:10px;padding:14px 16px;color:{C["text"]}">./reproduce.sh dashboard     # ~2 min, from committed outputs\ncd dashboard && python3 -m http.server 8000</pre>'
+    b.append(box(54, 542, 720, 0, f'<pre class="mono" style="font-size:16.5px;line-height:1.75;color:{C["text"]}">{esc(tree)}</pre>'))
+    b.append(card(810, 478, 756, 374, ""))
+    b.append(pill(830, 494, 300, "ONLY THE DASHBOARD?", C["jersey"], 32, 14))
+    b.append(box(830, 540, 716, 0, f'<pre class="mono" style="font-size:14px;line-height:1.7;background:{C["bg"]};border-radius:10px;padding:14px 16px;color:{C["text"]}">./reproduce.sh dashboard     # ~2 min, from committed outputs\ncd dashboard && python3 -m http.server 8000</pre>'
                                     '<div class="s m" style="margin-top:12px">Or just open <span class="mono">dashboard/dist/under-pressure-rating.html</span>: one self-contained file, works offline.</div>'
-                                    '<div class="h3" style="margin-top:18px">Inside the dashboard</div><ul class="b" style="columns:2;margin-top:8px"><li>Overview & featured top 3</li><li>Batters / Bowlers tables + profiles</li><li>Pressure Model explainer</li><li>Compare two players</li><li>Match-by-match pressure value</li><li>Watchlist & RR review</li><li>Methodology + full report</li><li>Reproduce: this deck, links, steps</li></ul>'))
+                                    '<div class="h3" style="margin-top:12px">Inside the dashboard</div><ul class="b" style="columns:2;margin-top:8px"><li>Overview & featured top 3</li><li>Batters / Bowlers tables + profiles</li><li>Pressure Model explainer</li><li>Compare two players</li><li>Match-by-match pressure value</li><li>Watchlist & RR review</li><li>Methodology + full report</li><li>Reproduce: this deck, links, steps</li></ul>'))
     return slide(n, "Reproduce everything", "REPRODUCE", "".join(b),
                  notes="Both links, the five steps a judge needs, and what we verified.")
 
@@ -741,7 +741,7 @@ def s_annex_data(n):
     b.append(pill(54, 528, 360, "WHAT THE EXPLORATION TOLD US", C["magenta"], 32, 14, "search"))
     for i, (a, s_) in enumerate(facts):
         r, c = divmod(i, 2)
-        b.append(box(54 + c * 760, 584 + r * 120, 720, 0, f'<div style="display:flex;gap:14px"><div style="flex:none;width:44px;height:44px;border-radius:12px;background:{C["panel2"]};display:grid;place-items:center;font-family:Archivo;font-weight:900;color:{C["pink"]}">{i + 1}</div><div><div class="h3" style="font-size:17px">{a}</div><div class="s m" style="margin-top:4px">{s_}</div></div></div>'))
+        b.append(box(54 + c * 770, 596 + r * 128, 730, 0, f'<div style="display:flex;gap:18px"><div style="flex:none;width:58px;height:58px;border-radius:14px;background:{C["panel2"]};display:grid;place-items:center;font-family:Archivo;font-weight:900;font-size:26px;color:{C["pink"]}">{i + 1}</div><div><div class="h3" style="font-size:25px;line-height:1.15">{a}</div><div class="s m" style="margin-top:6px;font-size:20px;line-height:1.4">{s_}</div></div></div>'))
     return slide(n, "Annexure A · How we analysed the data", "REPRODUCE", "".join(b),
                  notes="Exploration that shaped the method: where pressure sits in an innings and how play changes under it.")
 
