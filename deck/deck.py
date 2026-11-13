@@ -51,15 +51,16 @@ def s_cover(n):
     b = []
     b.append(box(0, 0, W, H, "", "", f"background:{C['frame']}"))
     b.append(box(0, 0, 560, H, "", "", f"background:{C['panel']}"))
-    b.append(box(70, 64, 200, 0, f'<img src="{logo()}" style="height:210px"/>'))
+    b.append(box(70, 56, 220, 232, f'<div style="padding:12px;box-sizing:border-box;height:232px"><img src="{logo()}" style="height:208px;width:auto;display:block;margin:0 auto"/></div>'))
     b.append(box(70, 300, 470, 0, '<div class="xs m" style="letter-spacing:.18em;font-weight:700">SUPERR SELECTOR · SEASON 2 · ROUND 1</div>'))
     b.append(box(70, 330, 480, 0, f'<div class="big" style="font-size:66px;line-height:.95">UNDER<br>PRESSURE<br><span class="pk">RATING</span></div>'))
     b.append(box(70, 548, 450, 0, '<div class="p" style="font-size:18px;line-height:1.45">Who delivers when the game is on the line, and how they could make <b>Rajasthan Royals</b> stronger at the <b>IPL 2027 auction</b>.</div>'))
-    links = (f'<div style="display:flex;gap:18px;align-items:center">'
-             f'<div style="border-radius:10px;overflow:hidden">{qr_svg(LIVE, 104)}</div><div><div class="h3">{icon("globe", 17, C["pink"])} Live dashboard</div><div class="s m mono">{short(LIVE)}</div></div></div>'
-             f'<div style="display:flex;gap:18px;align-items:center;margin-top:16px">'
-             f'<div style="border-radius:10px;overflow:hidden">{qr_svg(GITHUB, 104)}</div><div><div class="h3">{icon("github", 17, C["pink"])} Code, data, results</div><div class="s m mono">{short(GITHUB)}</div></div></div>')
-    b.append(box(70, 636, 470, 0, links))
+    row = 'display:flex;gap:18px;align-items:center;height:104px'
+    links = (f'<div style="{row}">'
+             f'<div style="border-radius:10px;overflow:hidden;flex:none">{qr_svg(LIVE, 96)}</div><div><div class="h3">{icon("globe", 17, C["pink"])} Live dashboard</div><div class="s m mono">{short(LIVE)}</div></div></div>'
+             f'<div style="{row};margin-top:14px">'
+             f'<div style="border-radius:10px;overflow:hidden;flex:none">{qr_svg(GITHUB, 96)}</div><div><div class="h3">{icon("github", 17, C["pink"])} Code, data, results</div><div class="s m mono">{short(GITHUB)}</div></div></div>')
+    b.append(box(70, 644, 470, 0, links))
     # right: question + featured players
     b.append(box(620, 70, 920, 0, '<div class="h2 m" style="font-size:15px">THE QUESTION</div><div class="big" style="font-size:40px;margin-top:10px;line-height:1.08">When the next ball can swing the match, <span class="pk">who still performs?</span></div>'))
     v, hz = TOPB[0], TOPW[0]
@@ -72,7 +73,8 @@ def s_cover(n):
     stats = [("837", "matches"), ("193,988", "deliveries"), ("5 yrs", "IPL + T20I, 2022–26"), ("10 + 10", "most reliable")]
     sx = 620
     for i, (a, l) in enumerate(stats):
-        b.append(card(sx + i * 232, 720, 214, 110, f'<div class="big pk" style="font-size:36px">{a}</div><div class="s m" style="margin-top:8px">{l}</div>'))
+        b.append(card(sx + i * 232, 694, 214, 100, f'<div class="big pk" style="font-size:36px">{a}</div><div class="s m" style="margin-top:8px">{l}</div>'))
+    b.append(box(620, 812, 920, 0, '<div class="xs m" style="letter-spacing:.16em;font-weight:700;color:#ff8ccc">PRESENTED BY</div>''<div style="font-size:28px;font-weight:800;color:#fff;margin-top:4px;line-height:1.1">Prashast Sidhant</div>''<div style="font-size:19px;color:#fff;margin-top:4px">National Institute of Technology Raipur</div>'))
     return slide(n, None, None, "".join(b), notes="Cover. Under Pressure Rating: a reproducible pressure-performance rating for the SupeRR Selector brief, built for Rajasthan Royals.")
 
 
