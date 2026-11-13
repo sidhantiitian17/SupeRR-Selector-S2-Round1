@@ -32,6 +32,11 @@ Full method and evidence: [`pipeline/outputs/SupeRR_Selector_Round1_HYBRID_Metho
 
 ## Quick look (no setup)
 
+- **Presentation (23 slides):** [`dashboard/deck/Under_Pressure_Rating_SupeRR_S2.pptx`](dashboard/deck/Under_Pressure_Rating_SupeRR_S2.pptx)
+  or the [PDF](dashboard/deck/Under_Pressure_Rating_SupeRR_S2.pdf). Problem → data → pressure model → method → iterations →
+  results → how each player could strengthen Rajasthan Royals for the IPL 2027 auction → reproducibility, plus three annexures
+  (how we analysed the data, the player pick we are backing, war-room moments).
+- **Live dashboard:** https://superr-under-pressure-rating.vercel.app (the deck is embedded under *Reproduce*).
 - **Dashboard:** download [`dashboard/dist/under-pressure-rating.html`](dashboard/dist/under-pressure-rating.html)
   and open it in any modern browser. It is a single self-contained file.
 - **Results:** every table the report uses is already committed in `pipeline/outputs/`.
@@ -144,7 +149,19 @@ Then open `dashboard/dist/under-pressure-rating.html`, or serve the source versi
 cd dashboard && python3 -m http.server 8000     # open http://localhost:8000
 ```
 
-Details on each view are in [`dashboard/README.md`](dashboard/README.md).
+Details on each view are in [`dashboard/README.md`](dashboard/README.md). The *Reproduce* view embeds the presentation,
+the download links, these steps and the annexure.
+
+## Rebuild the presentation
+
+The deck is generated from the same pipeline outputs: every chart number is computed in `deck/prep.py`.
+
+```bash
+cd deck
+npm install                      # pptxgenjs + fonts (Node 18+)
+pip install qrcode playwright && python3 -m playwright install chromium
+./make_deck.sh                   # ~1 min -> dashboard/deck/ (web viewer, PDF, PPTX)
+```
 
 ---
 
@@ -180,8 +197,10 @@ pipeline/
   src/                  config.py, s01..s09 steps, ratings.py, hybrid.py
   docs/                 development logs used in the report's iteration section
   outputs/              committed results (parquet, CSV, JSON, figures, PDF report)
+deck/                   presentation source: prep.py (numbers), deck.py + charts.py (slides as HTML/SVG), make_deck.sh
 dashboard/
   index.html, css/, js/ dashboard source (vanilla JS + SVG, no build tools)
+  deck/                 built presentation: web viewer, PDF, PPTX
   data/                 generated data files
   assets/               player photos, logo, report and figures
   scripts/              build, verify and single-file packaging scripts

@@ -24,6 +24,7 @@ Views (also reachable by URL hash `#/dashboard/<view>`):
 | `compare` | Two players side by side |
 | `matches` | Match-by-match pressure value |
 | `watchlist` | 2025–26 recent-form players to consider (not the official list) and a Rajasthan Royals review |
+| `reproduce` | The presentation (embedded, plus PDF/PPTX), GitHub and live links, step-by-step reproduction, annexure |
 | `methodology` | Methodology summary and the full PDF report |
 | `settings` | Display preferences |
 
@@ -46,7 +47,8 @@ Or from the repo root: `./reproduce.sh dashboard`.
 index.html            entry page (loads css/, js/, data/)
 css/                  styles.css (layout, theme), pages.css (per-view styles)
 js/                   app.js (state, overview), pages.js (other views), charts.js (SVG charts), icons.js, main.js (router)
-data/                 generated: clutch_data.js, watchlist.js, FINAL_TOP10_HYBRID.csv
+data/                 generated: clutch_data.js, watchlist.js, FINAL_TOP10_HYBRID.csv; links.js (GitHub/live URLs)
+deck/                 presentation built by ../deck/make_deck.sh (viewer index.html, PDF, PPTX)
 assets/               player photos (webp), RR logo, report PDF and figures copied from the pipeline
 scripts/              build_data.py, build_watchlist.py, verify_dashboard.py, build_single_file.py
 dist/                 the single-file build

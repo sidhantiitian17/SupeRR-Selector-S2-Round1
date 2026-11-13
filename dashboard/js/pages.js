@@ -275,6 +275,47 @@
       <div class="rr-grid">${rr}</div>`;
   };
 
+
+  /* ================================================================ Reproduce: deck, links, steps, annexure */
+  pages.reproduce = (host, api) => {
+    ctx = api; resizers = [];
+    const L = window.CLUTCH_LINKS || {}, short = (u) => (u || "").replace(/^https?:\/\//, "");
+    const ann = [
+      [21, "A", "How we analysed the data", "Where pressure sits in an innings (over × wickets heatmaps), how the Pressure Index is distributed, and what changes under pressure: scoring is not slower, mistakes cost more."],
+      [22, "B", "The player pick we are backing", "Heinrich Klaasen: RR strike at 135 against spin in middle-overs pressure (league 148); Klaasen strikes at 197. Positive in every season, with the honest caveats."],
+      [23, "C", "War-room moments", "The version that looked too good (and was dropped), two solutions with no winner, the Archer debate, and the dashboard-vs-report bug that produced our 10,172-check verifier."]];
+    const steps = [["Clone", `git clone ${L.github}.git`], ["Install", "pip install -r requirements.txt"], ["Run everything", "./reproduce.sh            # ~45–60 min, seed 42"],
+      ["Check", "cat pipeline/outputs/FINAL_TOP10_HYBRID.csv   # verifier ends with '10172 checks, 0 failed'"], ["Only the dashboard", "./reproduce.sh dashboard  # ~2 min, from committed outputs"],
+      ["Rebuild this deck", "cd deck && npm install && ./make_deck.sh"]];
+    host.innerHTML = `
+      <article class="card rp-deck"><div class="card-head"><h3 class="card-title">Presentation · 23 slides</h3>
+        <div class="rp-actions"><a class="btn sm btn-ghost" href="${L.deckOpen || L.deck}" target="_blank" rel="noopener"><span data-icon="globe"></span> Open full screen</a>
+        <a class="btn sm btn-ghost" href="${L.pdf}" download><span data-icon="download"></span> PDF</a><a class="btn sm" href="${L.pptx}" download><span data-icon="download"></span> PPTX</a></div></div>
+        <div class="rp-frame"><iframe id="deck-frame" src="${L.deck}" title="Under Pressure Rating presentation" loading="lazy" allowfullscreen></iframe></div>
+        <p class="chart-note">Use ← → or the buttons under the slide. Problem → data → pressure model → method → iterations → results → RR plan → reproducibility, then three annexures.</p></article>
+      <div class="rp-links">
+        <a class="card rp-link" href="${L.github}" target="_blank" rel="noopener"><span class="rp-ic" data-icon="github"></span><div><b>GitHub repository</b><small>Raw data, pipeline, committed outputs, this dashboard and the deck source</small><code>${short(L.github)}</code></div></a>
+        <a class="card rp-link" href="${L.live}" target="_blank" rel="noopener"><span class="rp-ic" data-icon="globe"></span><div><b>Live dashboard</b><small>This site, deployed on Vercel</small><code>${short(L.live)}</code></div></a>
+        <div class="card rp-link rp-ok"><span class="rp-ic" data-icon="shield"></span><div><b>Verified</b><small>Clean clone + rerun reproduced all 40 data files exactly; the dashboard verifier recomputes 10,172 numbers from the pipeline: 0 failed.</small></div></div>
+      </div>
+      <article class="card"><div class="card-head"><h3 class="card-title">Reproduce our results, step by step</h3></div>
+        <ol class="rp-steps">${steps.map(([a, c]) => `<li><b>${a}</b><code>${esc(c)}</code></li>`).join("")}</ol>
+        <p class="chart-note">Full guide in the repository README: requirements, what each pipeline step writes, and how to check the results.</p></article>
+      <h3 class="rp-h">Annexure</h3>
+      <div class="rp-ann">${ann.map(([n, k, t, d]) => `<button class="card rp-annc" data-slide="${n}"><span class="rp-k">${k}</span><b>${t}</b><small>${d}</small><span class="rp-go">Show slide ${n} →</span></button>`).join("")}</div>`;
+    window.ClutchIcons && window.ClutchIcons.fill && window.ClutchIcons.fill(host);
+    const fr = $("#deck-frame");
+    if (L.deckHtmlB64) {   // single-file build: the deck travels inside this page
+      const bytes = Uint8Array.from(atob(L.deckHtmlB64), (c) => c.charCodeAt(0));
+      fr.removeAttribute("loading"); fr.srcdoc = new TextDecoder().decode(bytes);
+    }
+    host.querySelectorAll("[data-slide]").forEach((b) => b.addEventListener("click", () => {
+      const n = +b.dataset.slide;
+      try { fr.contentWindow.postMessage({ goSlide: n }, "*"); } catch (e) { /* cross-origin data: URL */ }
+      fr.scrollIntoView({ behavior: "smooth", block: "center" });
+    }));
+  };
+
   /* ================================================================ Settings */
   pages.settings = (host, api) => {
     const { state } = api; ctx = api;

@@ -19,6 +19,7 @@
     compare: ["Compare", "Two or three players, side by side"],
     matches: ["Matches", "Ball-by-ball pressure, match by match"],
     watchlist: ["Watchlist", "Recent form (2025–26) and a Rajasthan Royals review"],
+    reproduce: ["Reproduce", "The presentation, the code and every step to rebuild our results"],
     methodology: ["Methodology", "How the Clutch Rating is built, and how far to trust it"],
     settings: ["Settings", "Display and motion preferences"],
   };
