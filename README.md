@@ -87,8 +87,12 @@ One command does all of it:
 
 This runs the pipeline steps below in order (random seed fixed at 42), prints the final lists, then rebuilds
 and verifies the dashboard. It overwrites the files in `pipeline/outputs/` and `dashboard/data/` and `dashboard/dist/`,
-so `git status` / `git diff` afterwards shows whether anything changed. In our from-scratch run it reproduced
-the committed outputs exactly.
+so `git status` / `git diff` afterwards shows whether anything changed.
+
+We checked this from a clean clone: deleting `pipeline/outputs/` and rerunning reproduced all 40 data files,
+tables and figures exactly. The report PDF's text was identical on all 10 pages; only its embedded creation
+timestamp differs, so git will show the PDF as changed. The `hyb_*log.txt` files are saved console logs
+from our original run and are not rewritten.
 
 To run the steps by hand instead:
 
