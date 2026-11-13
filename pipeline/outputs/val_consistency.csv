@@ -1,0 +1,9 @@
+role,formulation,split_half_rho
+bat,positive-match rate,0.08691605921231409
+bat,impact rate (top-quartile matches),0.11602872938756992
+bat,no-failure rate (avoid bottom quartile),0.06069560329636137
+bat,median match value,0.06835411754035915
+bowl,positive-match rate,0.053150212448030976
+bowl,impact rate (top-quartile matches),0.06484915372808603
+bowl,no-failure rate (avoid bottom quartile),0.07612926139032361
+bowl,median match value,0.06055355934388192

@@ -1,0 +1,15 @@
+,mean,se,A_wins_pct
+A-def | strike rate,-0.04951726676150407,0.04259169059601133,40.0
+A-def | runs above exp (wkt-adj),0.06730822115862381,0.05379591959253406,70.0
+A-def | WPA/ball,0.05409680101420712,0.047554681940589566,50.0
+A-def | dismissal-avoid,0.19627410364674214,0.04944732511895784,76.66666666666667
+B-def | strike rate,-0.1882045752553551,0.04836087018248548,20.0
+B-def | runs above exp (wkt-adj),-0.060627405156453415,0.04737019100469804,40.0
+B-def | WPA/ball,0.0223649069632156,0.043573004076388804,43.333333333333336
+B-def | dismissal-avoid,0.1517452694994882,0.05097638036672045,73.33333333333333
+A-def | economy (neg),,,0.0
+A-def | runs saved vs exp (wkt-adj),,,0.0
+A-def | wickets/ball,,,0.0
+B-def | economy (neg),,,0.0
+B-def | runs saved vs exp (wkt-adj),,,0.0
+B-def | wickets/ball,,,0.0

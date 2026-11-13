@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Under Pressure Rating · Where the game is on the line</title>
+  <meta name="description" content="Under Pressure Rating: a data-driven rating of batters and bowlers under pressure, built from IPL and T20I ball-by-ball data since 2022. SupeRR Selector Season 2, Round 1." />
+  <meta name="theme-color" content="#0b0610" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=Inter:wght@400..700&family=Bebas+Neue&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/styles.css" />
+  <link rel="stylesheet" href="css/pages.css" />
+  </head>
+<body class="is-app">
+<div id="app">
+  <div class="frame">
+    <aside class="sidebar" aria-label="Primary">
+      <a class="brand" href="#/dashboard/overview" id="brand-home" title="Overview">
+        <img class="brand-logo" src="assets/rr-logo.png" alt="Rajasthan Royals" width="34" height="52" />
+        <span class="brand-name">Under Pressure<span class="brand-dot">.</span>Rating</span>
+      </a>
+
+      <nav class="nav" id="nav">
+        <button class="nav-item active" data-view="overview"><span class="ico" data-icon="overview"></span><span class="lbl">Overview</span></button>
+        <button class="nav-item" data-view="batters"><span class="ico" data-icon="batters"></span><span class="lbl">Batters</span></button>
+        <button class="nav-item" data-view="bowlers"><span class="ico" data-icon="bowlers"></span><span class="lbl">Bowlers</span></button>
+        <button class="nav-item" data-view="model"><span class="ico" data-icon="model"></span><span class="lbl">Pressure Model</span></button>
+        <button class="nav-item" data-view="compare"><span class="ico" data-icon="compare"></span><span class="lbl">Compare</span></button>
+        <button class="nav-item" data-view="matches"><span class="ico" data-icon="matches"></span><span class="lbl">Matches</span></button>
+        <button class="nav-item" data-view="watchlist"><span class="ico" data-icon="watchlist"></span><span class="lbl">Watchlist</span></button>
+        <button class="nav-item" data-view="methodology"><span class="ico" data-icon="methodology"></span><span class="lbl">Methodology</span></button>
+        <button class="nav-item" data-view="settings"><span class="ico" data-icon="settings"></span><span class="lbl">Settings</span></button>
+      </nav>
+
+      <div class="promo">
+        <div class="promo-title"><span class="ico" data-icon="report"></span> Methodology Report</div>
+        <p>See how the Pressure Index is built, step by step.</p>
+        <button class="btn btn-small" data-view="methodology">Open Report</button>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div class="titles">
+          <h1 id="page-title">Pressure Dashboard</h1>
+          <p class="subtitle" id="page-sub">Measure. Compare. Rank.</p>
+        </div>
+        <div class="controls">
+          <span class="pill date-pill" title="Data window of the pipeline"><span class="ico" data-icon="calendar"></span><span id="date-label"></span></span>
+          <div class="seg" role="group" aria-label="Competition" id="comp-seg">
+            <button data-comp="ipl">IPL</button>
+            <button data-comp="t20i">T20I</button>
+            <button data-comp="combined" class="on">Combined</button>
+          </div>
+        </div>
+      </header>
+
+      <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+      <section class="grid" id="grid">
+        <article class="card featured" id="featured" aria-label="Featured player"></article>
+        <article class="card trend" id="trend" aria-label="Pressure value trend"></article>
+        <article class="card kpis" id="kpis" aria-label="Key metrics"></article>
+        <article class="card donut-card" id="donut" aria-label="Pressure situations"></article>
+        <article class="card leaderboard" id="leaderboard" aria-label="Top 10 leaderboard"></article>
+        <article class="card matches" id="matches" aria-label="Pressure performance by match"></article>
+      </section>
+      <section class="page" id="page" hidden></section>
+    </main>
+  </div>
+
+  <div class="overlay" id="overlay" hidden></div>
+  <aside class="drawer" id="drawer" aria-label="Player details" aria-hidden="true"></aside>
+  <div class="tip" id="tip" role="tooltip" hidden></div>
+</div>
+
+<noscript><p style="position:fixed;inset:auto 0 0 0;padding:14px;background:#2a1d3b;color:#fff;text-align:center">Under Pressure Rating needs JavaScript. The ranked lists are also in data/FINAL_TOP10_HYBRID.csv.</p></noscript>
+
+<script src="data/clutch_data.js"></script>
+<script src="data/watchlist.js"></script>
+<script src="js/icons.js"></script>
+<script src="js/charts.js"></script>
+<script src="js/app.js"></script>
+<script src="js/pages.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>

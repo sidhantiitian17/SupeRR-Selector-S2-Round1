@@ -1,0 +1,13 @@
+version,bat,bowl
+"v1 top-25%
+joint run value",0.011,0.068
+"v2 + split
+run/wkt shrink",0.037,0.048
+"v3 WPA/LI
+(uncentred)",0.309,0.229
+"v4 WPA/LI
+centred",0.11,0.133
+"v5 run value
+direct EB",0.093,0.03
+"v6 FINAL
+blend EB",0.2176196275390017,0.1736093861953666
