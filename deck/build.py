@@ -1,6 +1,6 @@
 """Assemble build/deck.html (all slides, print-ready) and build/viewer.html (keyboard/click slideshow for the web)."""
 import pathlib, sys
-from lib import css, ROOT, esc
+from lib import css, ROOT, esc, logo
 import deck
 
 
@@ -11,7 +11,7 @@ def build(only=None):
             continue
         secs.append(fn(i))
     style = css()
-    page = (f'<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>Under Pressure Rating · SupeRR Selector S2</title>'
+    page = (f'<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>Under Pressure Rating · SupeRR Selector S2</title><link rel="icon" type="image/png" href="{logo()}"/>'
             f'<style>{style}@page{{size:1600px 900px;margin:0}}</style></head><body>{"".join(secs)}</body></html>')
     out = ROOT / "build" / "deck.html"
     out.write_text(page)

@@ -101,27 +101,27 @@ def s_problem(n):
         if i:
             b.append(box(x - gap / 2 - 1, 210, 2, 318, "", "", f"background:{C['line']}"))
     # bottom left: why raw numbers mislead (two identical sixes)
-    b.append(card(34, 552, 900, 300, ""))
-    b.append(pill(54, 568, 330, "WHY RAW NUMBERS MISLEAD", C["magenta"], 32, 14))
+    b.append(card(34, 566, 900, 286, ""))
+    b.append(pill(54, 580, 330, "WHY RAW NUMBERS MISLEAD", C["magenta"], 32, 14))
     ex = D["value_example"][-1]
     g = Graph()
-    g.node("a", 60, 622, 250, 92, f'<b>{icon("ball", 16, BAT)} Six, last over of a chase</b><small>Need {ex["need"]} off {ex["left"]}; win probability {ex["wp"]:.0%} → {ex["wpa"]:.0%}</small>', "node hot")
-    g.node("b", 60, 736, 250, 92, f'<b>{icon("ball", 16, C["faint"])} Six, 10th over, 80 runs ahead</b><small>Win probability hardly moves</small>', "node")
-    g.node("raw", 380, 680, 190, 84, '<b>Raw stats</b><small>Both = 6 runs, same strike-rate boost</small>', "node")
-    g.node("ours", 640, 622, 270, 92, '<b>Our rating: high-pressure ball</b><small>Counted in the pressure sample, valued vs an average player in that exact state</small>', "node hot")
-    g.node("ours2", 640, 736, 270, 92, '<b>Our rating: routine ball</b><small>Counts toward the player\'s usual level, not pressure</small>', "node")
+    g.node("a", 60, 628, 250, 92, f'<b>{icon("ball", 16, BAT)} Six, last over of a chase</b><small>Need {ex["need"]} off {ex["left"]}; win probability {ex["wp"]:.0%} → {ex["wpa"]:.0%}</small>', "node hot")
+    g.node("b", 60, 740, 250, 92, f'<b>{icon("ball", 16, C["faint"])} Six, 10th over, 80 runs ahead</b><small>Win probability hardly moves</small>', "node")
+    g.node("raw", 380, 686, 190, 84, '<b>Raw stats</b><small>Both = 6 runs, same strike-rate boost</small>', "node")
+    g.node("ours", 640, 628, 270, 92, '<b>Our rating: high-pressure ball</b><small>Counted in the pressure sample, valued vs an average player in that exact state</small>', "node hot")
+    g.node("ours2", 640, 740, 270, 92, '<b>Our rating: routine ball</b><small>Counts toward the player\'s usual level, not pressure</small>', "node")
     g.edge("a", "raw", "r", "l", tb=0.3).edge("b", "raw", "r", "l", tb=0.7)
     g.edge("a", "ours", color=C["pink"], label="leverage high").edge("b", "ours2", color=C["faint"], label="leverage low", lab_dy=18)
     b.append(g.render())
     # bottom right: what we deliver
-    b.append(card(950, 552, 616, 300, ""))
-    b.append(pill(970, 568, 260, "WHAT WE DELIVER", C["jersey"], 32, 14))
+    b.append(card(950, 566, 616, 286, ""))
+    b.append(pill(970, 580, 260, "WHAT WE DELIVER", C["jersey"], 32, 14))
     items = [("trophy", "Top 10 batters + top 10 bowlers", "ranked by a rating chosen on unseen matches"),
              ("flag", "An IPL 2027 plan for RR", "pressure gaps by phase, player fit, availability"),
              ("chart", "Interactive dashboard", "every number checked against the pipeline (10,172 checks)"),
              ("code", "One-command reproduction", "raw CSVs → final lists → report, seed 42")]
     for i, (ic, a, s) in enumerate(items):
-        b.append(box(972, 618 + i * 56, 580, 50, f'<div style="display:flex;gap:12px;align-items:center"><div style="width:40px;height:40px;border-radius:10px;background:{C["panel2"]};display:grid;place-items:center">{icon(ic, 21, C["pink"])}</div><div><div class="h3">{a}</div><div class="xs m">{s}</div></div></div>'))
+        b.append(box(972, 628 + i * 54, 580, 50, f'<div style="display:flex;gap:12px;align-items:center"><div style="width:40px;height:40px;border-radius:10px;background:{C["panel2"]};display:grid;place-items:center">{icon(ic, 21, C["pink"])}</div><div><div class="h3">{a}</div><div class="xs m">{s}</div></div></div>'))
     return slide(n, "Problem: who is reliable under pressure?", "PROBLEM", "".join(b),
                  notes="Six sub-problems hide inside the brief. Each one maps to a design choice on the following slides.")
 
