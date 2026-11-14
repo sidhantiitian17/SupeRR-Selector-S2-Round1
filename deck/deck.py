@@ -284,12 +284,12 @@ def s_value(n):
     g.edge("exp", "f", "b", "t", tb=0.5, dash=True)
     b.append(g.render())
     b.append(card(34, 470, 760, 382, '<div class="h2">What a wicket costs</div><div class="xs m">Runs the batting side loses on average when a wicket falls (from an expected-remaining-runs model)</div>'))
-    b.append(svg_abs(54, 536, 720, 190, ch.hbars([("Powerplay", 9.6, BAT), ("Middle overs", 5.4, BAT), ("Death overs", 2.6, BAT)], 720, 190, unit=" runs", maxv=11)))
+    b.append(svg_abs(54, 536, 720, 190, ch.hbars([("Powerplay", round(D["wicket_cost"]["PP"], 1), BAT), ("Middle overs", round(D["wicket_cost"]["MID"], 1), BAT), ("Death overs", round(D["wicket_cost"]["DEATH"], 1), BAT)], 720, 190, unit=" runs", maxv=11)))
     b.append(box(54, 742, 720, 0, f'<div style="background:{C["panel2"]};border-radius:10px;padding:12px 16px"><div class="h3">{icon("ball", 16, BOWL)} Bowlers get the mirror image</div><div class="s m" style="margin-top:4px">value = (expected runs conceded − runs conceded) + wicket cost × (wicket − chance of a wicket). The same six above is <b class="bl">{ex["bval"]:+.2f}</b> for {ex["b"]}.</div></div>'))
     b.append(card(810, 96, 756, 420, ""))
     b.append(pill(830, 112, 330, "WHY THIS IS FAIR", C["jersey"], 32, 14))
     fair = [("scale", "Same yardstick for every role", "an opener is compared with average openers' outcomes in powerplay states; a finisher with death-over states"),
-            ("alert", "Wickets are not free", "losing a wicket early costs ~9.6 runs; at the death ~2.6. A batter who slogs and gets out pays for it"),
+            ("alert", "Wickets are not free", f"losing a wicket early costs ~{D['wicket_cost']['PP']:.1f} runs; at the death ~{D['wicket_cost']['DEATH']:.1f}. A batter who slogs and gets out pays for it"),
             ("users", "Opposition counts", "Elo in the win-probability model; balls against Associates weighted 0.5"),
             ("globe", "Competition-aware", "IPL and T20I balls compared within their own competition, pace vs spin separated")]
     for i, (ic, a, s) in enumerate(fair):

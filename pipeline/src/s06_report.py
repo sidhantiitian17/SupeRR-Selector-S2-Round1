@@ -10,7 +10,7 @@ from reportlab.lib import colors
 from reportlab.lib.units import cm
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.platypus import (SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Image, PageBreak, KeepTogether)
-from config import OUT, FIG, HIGH_PRESSURE_QUANTILE, MIN_PRESSURE_BALLS_BAT, MIN_PRESSURE_MATCHES, MIN_BASELINE_BALLS, OPP_WEIGHT
+from config import wicket_cost_text, OUT, FIG, HIGH_PRESSURE_QUANTILE, MIN_PRESSURE_BALLS_BAT, MIN_PRESSURE_MATCHES, MIN_BASELINE_BALLS, OPP_WEIGHT
 
 BLUE, ORANGE, GRAY, INK, MUTED = "#2a78d6", "#eb6834", "#b9b8b2", "#0b0b0b", "#52514e"
 plt.rcParams.update({"font.size": 9, "axes.edgecolor": "#c9c8c2", "axes.labelcolor": MUTED, "xtick.color": MUTED,
@@ -213,7 +213,7 @@ def main():
     S += [P("3. Measuring performance", H2), P(
         "Two expected-outcome models (gradient boosting, out-of-fold) estimate, for an average player in exactly the same situation - innings, over, balls and wickets left, score, runs needed, required and current rate, Pressure Index, Elo difference, pace or spin, competition, opposition tier and season: "
         "expected runs off the bat and the probability the striker is out (for batting); expected runs conceded and the probability of a bowler's wicket (for bowling). "
-        "A wicket is converted into runs with a state-dependent wicket cost from an expected-remaining-runs model: about 9.6 runs in the powerplay, 5.4 in the middle overs and 2.5-2.8 at the death.")]
+        f"A wicket is converted into runs with a state-dependent wicket cost from an expected-remaining-runs model: {wicket_cost_text()}.")]
     S += [P("<b>Batter value per ball</b> = (runs - expected runs) - wicket cost x (out - P(out)).<br/><b>Bowler value per ball</b> = (expected runs conceded - runs conceded) + wicket cost x (wicket - P(wicket)).<br/>"
             "Byes and leg-byes are not charged to the bowler; run-outs are not credited to him; a dismissed non-striker is not charged to the striker. "
             "We also compute a win-probability lens (WPA / leverage, centred within innings x phase x pressure-decile cells) which is used for the match-level consistency component.")]

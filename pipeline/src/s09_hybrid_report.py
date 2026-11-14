@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import cm
 from reportlab.platypus import SimpleDocTemplate, Spacer, PageBreak, KeepTogether
-from config import OUT, FIG, OPP_WEIGHT, MIN_PRESSURE_BALLS_BAT, MIN_PRESSURE_MATCHES, MIN_BASELINE_BALLS
+from config import wicket_cost_text, OUT, FIG, OPP_WEIGHT, MIN_PRESSURE_BALLS_BAT, MIN_PRESSURE_MATCHES, MIN_BASELINE_BALLS
 from s06_report import (fig_pressure_maps, fig_definitions, fig_calibration, P, table, img, H1, H2, B, SM,
                         BLUE, ORANGE, GRAY, MUTED, INK)
 from hybrid import prep
@@ -203,7 +203,7 @@ def main():
     S += [P("4. Measuring performance - the final recipes", H2), P(
         "<b>Context-adjusted rating (from A).</b> Out-of-fold models estimate what an average player would produce in exactly the same situation: innings, over, balls and wickets left, score, chase equation, Pressure Index, Elo, pace or spin, competition, opposition tier and season. "
         "Batter value per ball = (runs - expected) - wicket cost x (out - P(out)); bowler value = (expected conceded - conceded) + wicket cost x (wicket - P(wicket)). "
-        "The wicket cost comes from an expected-remaining-runs model: about 9.6 runs in the powerplay, 5.4 in the middle overs and 2.6 at the death. "
+        f"The wicket cost comes from an expected-remaining-runs model: {wicket_cost_text()}. "
         "Run and wicket parts are shrunk separately (empirical Bayes, DerSimonian-Laird). The rating averages the direct pressure estimate with a hierarchical one (own overall level + shrunk pressure deviation). Balls against Associates count 0.5."),
         P("<b>Rate components (from B).</b> Batters: pressure strike rate at leverage percentile 75 and 85, each z-scored. Bowlers: minus runs per ball and win probability added per ball at percentile 70, each shrunk toward the pool mean with strength 500 and z-scored."),
         P(f"<b>Final batter score</b> = 0.67 x z(A composite) + 0.33 x z(B strike-rate ensemble), over regular pressure batters (at least {MIN_PRESSURE_BALLS_BAT} pressure balls, {MIN_PRESSURE_MATCHES} matches, {MIN_BASELINE_BALLS} usual balls). "

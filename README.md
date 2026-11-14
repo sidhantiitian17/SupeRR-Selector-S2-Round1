@@ -1,5 +1,23 @@
 # SupeRR Selector Season 2 · Round 1: Under Pressure Rating
 
+## 📌 Judges: start here (read directly on GitHub)
+
+Click a link below. GitHub shows the PDF in the browser, so nothing needs to be downloaded or installed.
+
+| Read this | What it is | Length |
+|---|---|---|
+| **[Under Pressure Rating: Complete Guide (PDF)](report/Under_Pressure_Rating_Complete_Guide.pdf)** | Plain-English, start-to-finish story with diagrams: how we opened the data, the analysis plan, the maths, why this approach, the alternatives we rejected, trade-offs, limitations, architecture, the player pick we are backing and the war-room moments. Best single document to understand everything. | 67 pages |
+| **[HYBRID Methodology Report (PDF)](pipeline/outputs/SupeRR_Selector_Round1_HYBRID_Methodology_Report.pdf)** | The formal methodology and evidence for the final top 10: model, ratings, held-out tournament, checks. | 10 pages |
+| [Presentation deck (PDF)](dashboard/deck/Under_Pressure_Rating_SupeRR_S2.pdf) | The 23-slide summary. | 23 slides |
+| [Live dashboard](https://superr-under-pressure-rating.vercel.app) | Interactive view of the same results. | |
+| [Final top 10 (CSV)](pipeline/outputs/FINAL_TOP10_HYBRID.csv) | Source of truth for the submitted names. | |
+
+**Presented by:** Prashast Sidhant, National Institute of Technology Raipur.
+
+If the PDF preview is slow to load on GitHub, use the *Download raw file* button on the file page.
+
+---
+
 **Goal:** identify the most reliable players under pressure, using the ball-by-ball data provided for the round
 (IPL + T20I, 2022–2026: 837 matches, 193,988 deliveries).
 
@@ -108,7 +126,7 @@ python3 s02_pressure.py        # LightGBM win-probability model -> leverage -> P
 python3 s03_value.py           # expected-outcome models -> context-adjusted value of every ball
 python3 s05_validate.py        # validate pressure definitions, value lenses and rating models
 python3 s04_rank.py            # solution A ratings (one parent of the hybrid)
-python3 s07_hybrid_select.py   # held-out tournament: A vs B vs 45 hybrid candidates per role
+python3 s07_hybrid_select.py   # held-out tournament: A vs B vs 79 candidate methods per role
 python3 s08_hybrid_final.py    # final hybrid lists, bootstrap stability, specification checks
 python3 s09_hybrid_report.py   # methodology report (PDF)
 ```

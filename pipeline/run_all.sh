@@ -9,6 +9,6 @@ python3 s02_pressure.py        # win-probability model -> leverage -> Pressure I
 python3 s03_value.py           # expected-outcome models -> per-ball context-adjusted value
 python3 s05_validate.py        # validation of pressure definitions / lenses / models (solution A design)
 python3 s04_rank.py            # solution A ratings (reference parent + components)
-python3 s07_hybrid_select.py   # held-out tournament: A vs B vs 45 hybrid candidates per role
+python3 s07_hybrid_select.py   # held-out tournament: A vs B vs 79 candidate methods per role
 python3 s08_hybrid_final.py    # FINAL hybrid lists, bootstrap, specification support
 python3 s09_hybrid_report.py   # hybrid methodology report (PDF)

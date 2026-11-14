@@ -104,7 +104,9 @@ check("routine threshold", close(D["validation"]["thr_rt"], d.PI.quantile(.50), 
 # ---------------------------------------------------------------- 5. hard-coded text claims vs the methodology report PDF
 from pypdf import PdfReader
 pdf = " ".join(" ".join(pg.extract_text().split()) for pg in PdfReader(str(OUT / "SupeRR_Selector_Round1_HYBRID_Methodology_Report.pdf")).pages)
-for claim in ("1.15 in knock-outs", "9.6 runs in the powerplay", "5.4 in the middle overs", "2.6 at the death", "0.67 x z(A composite) + 0.33",
+_wc = d.groupby("phase").Wc.mean().round(1)
+check("wicket cost in pages.js matches data", f"about {_wc['PP']:.1f} runs in the powerplay, {_wc['MID']:.1f} in the middle, {_wc['DEATH']:.1f} at the death" in (ROOT / "js/pages.js").read_text())
+for claim in ("1.15 in knock-outs", f"{_wc['PP']:.1f} runs in the powerplay", f"{_wc['MID']:.1f} in the middle overs", f"{_wc['DEATH']:.1f} at the death", "0.67 x z(A composite) + 0.33",
               "0.90 x z[0.2 x z(A rating) + 0.8", "DerSimonian-Laird", "150 pressure balls, 12 matches, 150 usual balls",
               "30 random half-splits, 6 past-to-future cuts", "8 targets", "837 matches, 193,988 deliveries", "1st innings 0.706, chase 0.896"):
     check(f"report text contains '{claim}'", claim in pdf)

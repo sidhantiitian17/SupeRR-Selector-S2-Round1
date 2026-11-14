@@ -72,3 +72,15 @@ W_QUALITY = 0.55     # posterior pressure performance (per 100 balls)
 W_UPLIFT = 0.20      # pressure performance minus own usual level (rise vs dip)
 W_CONSIST = 0.25     # match-level reliability under pressure
 BOOTSTRAP_ITERS = 300
+
+
+def wicket_cost_by_phase():
+    """Average state-dependent wicket cost (runs) by phase, read from the s03 output, rounded to 0.1."""
+    import pandas as pd
+    wc = pd.read_parquet(OUT / "deliveries_value.parquet", columns=["phase", "Wc"]).groupby("phase").Wc.mean()
+    return {k: round(float(v), 1) for k, v in wc.items()}
+
+
+def wicket_cost_text():
+    w = wicket_cost_by_phase()
+    return f"about {w['PP']:.1f} runs in the powerplay, {w['MID']:.1f} in the middle overs and {w['DEATH']:.1f} at the death"
