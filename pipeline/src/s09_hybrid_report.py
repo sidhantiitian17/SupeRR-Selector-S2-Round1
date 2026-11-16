@@ -9,7 +9,7 @@ from reportlab.platypus import SimpleDocTemplate, Spacer, PageBreak, KeepTogethe
 from config import wicket_cost_text, OUT, FIG, OPP_WEIGHT, MIN_PRESSURE_BALLS_BAT, MIN_PRESSURE_MATCHES, MIN_BASELINE_BALLS
 from s06_report import (fig_pressure_maps, fig_definitions, fig_calibration, P, table, img, H1, H2, B, SM,
                         BLUE, ORANGE, GRAY, MUTED, INK)
-from hybrid import prep
+from hybrid import prep, describe, components
 
 
 def evidence(d, role, players):
@@ -125,6 +125,7 @@ def main():
     sel = pd.read_csv(OUT / "hyb_selection.csv", index_col=0)
     ch = json.load(open(OUT / "hyb_chosen.json"))["chosen"]
     bu = {r: sel[(sel.role == r) & sel.best_unconstrained].index[0] for r in ["bat", "bowl"]}
+    n_cand = int(((sel.role == "bat") & (sel.index != "random")).sum())
     DOCS = OUT.parent / "docs"
     histA = pd.read_csv(DOCS / "iteration_log_solutionA.csv")
     h2h = {r: pd.read_csv(DOCS / f"h2h_A_vs_B_{r}.csv", index_col=0) for r in ["bat", "bowl"]}
@@ -180,7 +181,7 @@ def main():
         ["Scope IPL + T20I only (emerging A-team events excluded)", "B", "kept"],
         ["Method choice by held-out top-10 gain, maximin rule", "B", "kept"],
         ["Usual-level uplift (pressure level minus own usual level)", "A", "kept, both roles"],
-        ["Match consistency (inside A's composite)", "A", "kept (batters)"],
+        ["Match consistency (share of pressure matches with a top-quartile contribution)", "A", "kept (batters)"],
         ["Opposition down-weighting, Elo in WP model", "A", "kept"],
         ["Bootstrap rank intervals + specification support counts", "A + B", "kept"],
     ], columns=["Ingredient", "From", "Outcome"])
@@ -200,17 +201,19 @@ def main():
     S += [KeepTogether([P("<b>Does it separate pressure from ordinary play?</b> Leverage puts about twice its share of the match-deciding win-probability swing into the balls it flags. A hand-weighted stress score and a simple rule-based definition both do much worse.", B),
                         img("definitions.png", W_ * 0.78), table(dd, fs=7)])]
 
+    recipe_txt = (f"<b>Final batter score</b> = {describe(ch['bat'], 'bat')}, over regular pressure batters (at least {MIN_PRESSURE_BALLS_BAT} pressure balls, {MIN_PRESSURE_MATCHES} matches, {MIN_BASELINE_BALLS} usual balls). "
+                  + (f"The A composite = {Wt['bat'][0]:.2f} x z(rating) + {Wt['bat'][1]:.2f} x z(uplift) + {Wt['bat'][2]:.2f} x z(match consistency), weights proportional to each component's split-half reliability with uplift floored at 0.15. " if components(ch['bat'])['composite'] else "")
+                  + "Uplift = pressure level minus the player's own usual level; match consistency = share of pressure matches with a top-quartile win-probability contribution.<br/>"
+                  + f"<b>Final bowler score</b> = {describe(ch['bowl'], 'bowl')}, same pool. "
+                  + ("The gate term means a bowler whose observed pressure value is below league average cannot rank above one who delivered. " if components(ch['bowl'])['gate'] else "")
+                  + "Both roles therefore score the comparison with usual level that the brief asks for.")
     S += [P("4. Measuring performance - the final recipes", H2), P(
         "<b>Context-adjusted rating (from A).</b> Out-of-fold models estimate what an average player would produce in exactly the same situation: innings, over, balls and wickets left, score, chase equation, Pressure Index, Elo, pace or spin, competition, opposition tier and season. "
         "Batter value per ball = (runs - expected) - wicket cost x (out - P(out)); bowler value = (expected conceded - conceded) + wicket cost x (wicket - P(wicket)). "
         f"The wicket cost comes from an expected-remaining-runs model: {wicket_cost_text()}. "
         "Run and wicket parts are shrunk separately (empirical Bayes, DerSimonian-Laird). The rating averages the direct pressure estimate with a hierarchical one (own overall level + shrunk pressure deviation). Balls against Associates count 0.5."),
         P("<b>Rate components (from B).</b> Batters: pressure strike rate at leverage percentile 75 and 85, each z-scored. Bowlers: minus runs per ball and win probability added per ball at percentile 70, each shrunk toward the pool mean with strength 500 and z-scored."),
-        P(f"<b>Final batter score</b> = 0.67 x z(A composite) + 0.33 x z(B strike-rate ensemble), over regular pressure batters (at least {MIN_PRESSURE_BALLS_BAT} pressure balls, {MIN_PRESSURE_MATCHES} matches, {MIN_BASELINE_BALLS} usual balls). "
-          f"The A composite = {Wt['bat'][0]:.2f} x z(rating) + {Wt['bat'][1]:.2f} x z(uplift: pressure level minus own usual level) + {Wt['bat'][2]:.2f} x z(match consistency: share of pressure matches with a top-quartile win-probability contribution). Its weights are proportional to each component's split-half reliability, with uplift floored at 0.15.<br/>"
-          f"<b>Final bowler score</b> = {1-wu_b:.2f} x z[0.2 x z(A rating) + 0.8 x z(B economy + WPA)] + {wu_b:.2f} x z(uplift: pressure level minus own usual level), same pool. "
-          "It also uses the delivered-under-pressure gate: a bowler whose observed pressure value is below league average cannot rank above one who delivered. "
-          "Both roles therefore score the comparison with usual level that the brief asks for.")]
+        P(recipe_txt)]
 
     # ================= ITERATION JOURNEY =================
     jb = journey_rows(sel, "bat", ch["bat"], bu["bat"]); jw = journey_rows(sel, "bowl", ch["bowl"], bu["bowl"])
@@ -220,7 +223,7 @@ def main():
     jt = pd.DataFrame([[l, f(db_, l, 2, "{:.3f}"), f(db_, l, 1, "{:+.3f}"), f(dw_, l, 2, "{:.3f}"), f(dw_, l, 1, "{:+.3f}")] for l in labs],
                       columns=["Stage", "Bat mean", "Bat worst", "Bowl mean", "Bowl worst"])
     log = pd.DataFrame([
-        ["0", "Simplest ideas", "Rank by raw pressure strike rate / economy, or by most pressure balls", "Volume is no better than random; raw rates help, but finishers dominate because context is ignored"],
+        ["0", "Simplest ideas", "Rank by raw pressure strike rate / economy, or by most pressure balls", "On their worst cell, volume and raw rates are no safer than random; finishers dominate because context is ignored"],
         ["1", "Define pressure", "Rule-based (chase RRR 9+, overs 17-20, early collapse) vs hand-weighted stress vs model leverage", "Leverage packs 2x its share of match-deciding swing into flagged balls; the rules ~1.2x. Leverage adopted"],
         ["2", "A v1", "Runs above expected, one joint shrinkage, top 25% pressure", "Reliability ~0.01-0.07: one dismissal (~9 runs) swamps the signal"],
         ["3", "A v2", "Shrink run and wicket parts separately", "Small gain (0.04 / 0.05)"],
@@ -230,7 +233,7 @@ def main():
         ["7", "A v6", "Blend direct + hierarchical; reliability-weighted composite with usual-level & consistency", "0.22 / 0.17 reliability; 2022-24 to 2025-26 prediction validated"],
         ["8", "Solution B (independent)", "Strike rate / economy + WPA chosen purely by held-out prediction, maximin rule", "Strong on strike-rate targets; ignores dismissals and context; small batter samples"],
         ["9", "Head-to-head A vs B", "Same deliveries, same unseen splits, 8 targets", "No overall winner: A better at dismissal avoidance, B at strike rate; bowlers tied"],
-        ["10", "Hybrid tournament", "52+ candidates mixing A and B, three pools, gates, extra terms", "Hybrid beats both parents on worst case and/or mean"],
+        ["10", "Hybrid tournament", f"{n_cand} candidates mixing A and B, three pools, gates, extra terms", "Hybrid beats both parents on worst case and/or mean"],
         ["11", "Brief constraint", "Only candidates scoring pressure vs usual level may be chosen", "Bowler score now includes uplift; cost shown in section 6"],
     ], columns=["Step", "Version", "What changed", "What the data said"])
     S += [PageBreak(), P("5. How we got here - from a simple approach to the final hybrid", H2), P(
@@ -238,7 +241,7 @@ def main():
         "Each version was judged on evidence: does the score agree with itself on different matches (split-half reliability), and does it pick players who perform under pressure in matches it never saw? "
         "Ideas that looked good but failed those checks were dropped, including some that flattered our early results.", B),
         table(log.apply(lambda c: c.map(lambda v: P(str(v), SM))), [0.9 * cm, 2.6 * cm, 6.2 * cm, 6.3 * cm], fs=6.9),
-        P("<b>Phase 1 - simple baselines.</b> Ranking by volume (most pressure balls) is no better than random. Raw pressure strike rate or economy helps, but it confuses role with skill: death-over finishers always score faster.", B),
+        P("<b>Phase 1 - simple baselines.</b> Ranking by volume (most pressure balls) or by raw pressure strike rate or economy can look fine on average, but on their worst held-out cell they are no safer than a random pick, because they confuse role with skill: death-over finishers always score faster.", B),
         P("<b>Phase 2 - solution A, six versions.</b> We built a leverage-based pressure index and a context-adjusted run value, then improved the reliability of the score version by version. "
           "We dropped the most flattering version (v3) because a diagnostic showed it was partly measuring context rather than skill.", B),
         img("hyb_iter_A.png", W_ * 0.85),
@@ -254,7 +257,7 @@ def main():
         "Schemes: 30 random half-splits of matches and 6 past-to-future cuts (train on the first 50-85% of matches by date, test on the rest). "
         "Targets, measured only on unseen matches for players with at least 30 pressure balls there: strike rate, runs above expected, win probability added per ball and dismissal avoidance for batters; "
         "economy, runs saved versus expected, win probability added and wickets per ball for bowlers. Each is measured under both pressure definitions, giving 8 targets x 2 schemes = 16 cells. "
-        "Gain = (mean target of the selected 10 - pool mean) / pool SD. Over 60 candidates per role were tested: blend weights 0.33-1.0 between A's rating or A's full composite and B's components, three pool rules, with and without usual-level and consistency terms, with and without the gate, plus the simple baselines. "
+        f"Gain = (mean target of the selected 10 - pool mean) / pool SD. {n_cand} candidates per role were tested: blend weights 0.33-1.0 between A's rating or A's full composite and B's components, three pool rules, with and without usual-level and consistency terms, with and without the gate, plus the simple baselines. "
         "Rule, fixed in advance: among candidates whose score contains the pressure-vs-usual comparison (the brief's requirement), take the best worst cell, and among those within 0.03 of it, the best mean.", B),
         img("hyb_tournament_bat.png", W_), img("hyb_tournament_bowl.png", W_)]
     def g(r, k, c):
@@ -293,8 +296,8 @@ def main():
         "The term is deliberately modest, because the data show pressure performance behaves mostly like a stable skill rather than a switch that turns on.")]
     S += [P("10. Reliability and limitations", H2), img("hyb_boot_bat.png", W_ * 0.7), img("hyb_boot_bowl.png", W_ * 0.7), P(
         "- Ranks 1-4 in each list are well supported; places 7-10 sit in a crowded band. No method keeps more than about 6-7 of its 10 names across resamples, which is a limit of the data.<br/>"
-        "- Predictive power is real but modest (about +0.3 to +0.45 pool SD on unseen matches), and dismissal or wicket targets are the noisiest cells.<br/>"
-        "- The feed omits runs beyond the first on wides, byes and leg-byes. Reconstructed winning chases fall about 1 run short on average.<br/>"
+        f"- Predictive power is real but modest: on unseen matches the final top 10 averages +{g('bat', ch['bat'], 'mean_cell'):.2f} pool SD for batters and +{g('bowl', ch['bowl'], 'mean_cell'):.2f} for bowlers, and the weakest cells (dismissal avoidance, wickets per ball) are slightly negative.<br/>"
+        "- Team totals are rebuilt from bat runs plus the recorded extras: 404 of 406 winning chases (99.5%) reach the target; the two exceptions are rain-reduced DLS matches whose revised target is not in the feed.<br/>"
         "- First-innings win probability is inherently uncertain (AUC ~0.71), so first-innings leverage is flatter.<br/>"
         "- Players whose pressure balls come mostly from one competition carry extra cross-competition uncertainty.", B)]
     S += [P("11. Reproducibility", H2), P(

@@ -267,11 +267,16 @@ def tournament(points, w, h, role, col):
         o.append(f'<circle cx="{X(wv):.1f}" cy="{Y(mv):.1f}" r="{rad}" fill="{c}" stroke="{C["panel"]}" stroke-width="1.5"/>')
         if kind in "AB" or chosen or name == "random":
             lab[name] = (X(wv), Y(mv), c, chosen)
-    for name, (x, y, c, chosen) in lab.items():
+    placed = []
+    for name, (x, y, c, chosen) in sorted(lab.items(), key=lambda kv: not kv[1][3]):
         txt = "Final hybrid" if chosen else ("Solution A" if name.startswith("A:") else "Solution B" if name.startswith("B:") else "Random 10")
         anchor = "end" if x > pl + iw * 0.7 else "start"
         dx = -12 if anchor == "end" else 12
         dy = -12 if chosen else (18 if txt == "Solution B" else 4)
+        for cand in (dy, -dy if dy else 18, 26, -26, 40, -40):
+            if all(abs((y + cand) - py) > 15 or abs((x + dx) - px) > 90 for px, py in placed):
+                dy = cand; break
+        placed.append((x + dx, y + dy))
         o.append(t(x + dx, y + dy, txt, 12.5, c if not chosen else C["text"], anchor, 800))
     return "".join(o)
 

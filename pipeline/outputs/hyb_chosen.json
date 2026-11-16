@@ -1,47 +1,41 @@
 {
   "chosen": {
-    "bat": "HA(composite) wB=0.33 | poolA",
+    "bat": "H wB=0.5 +U+C | poolA",
     "bowl": "H wB=0.8 gated +U0.1 | poolA"
   },
   "near_best": {
     "bat": [
-      "A: solution A (shipped)",
+      "H wB=0.5 +U+C | poolA",
+      "HA(composite) wB=0.5 | poolA",
+      "H wB=0.5 gated +U0.2 | poolA",
+      "HA(composite) wB=0.5 | poolA+B",
+      "HA(composite) wB=0.5 | poolB",
+      "H wB=0.67 +U+C | poolA",
+      "H wB=0.5 gated +U0.15 | poolA",
+      "H wB=0.67 gated +U0.1 | poolA",
+      "H wB=0.33 | poolA",
+      "H wB=0.5 gated | poolA",
+      "H wB=0.67 gated +U0.15 | poolA",
+      "HA(composite) wB=0.67 | poolA",
+      "H wB=0.5 | poolA",
+      "H wB=0.67 gated | poolA",
       "HA(composite) wB=0.33 | poolA",
       "HA(composite) wB=0.33 | poolA+B",
-      "HA(composite) wB=0.33 | poolB"
+      "HA(composite) wB=0.33 | poolB",
+      "H wB=0.67 | poolA",
+      "H wB=0.8 +U+C | poolA",
+      "H wB=0.5 gated +U0.1 | poolA",
+      "H wB=0.67 gated +U0.2 | poolA"
     ],
     "bowl": [
       "H wB=0.8 gated | poolB",
       "H wB=0.8 gated | poolA+B",
-      "H wB=0.8 gated +U0.1 | poolA",
-      "H wB=0.67 gated +U0.1 | poolA",
-      "H wB=1.0 +U+C | poolA",
-      "HA(composite) wB=0.67 | poolA",
       "H wB=0.8 gated | poolA",
-      "H wB=0.8 gated +U0.15 | poolA",
       "H wB=0.8 gated +U0.1 | poolB",
-      "H wB=1.0 | poolA",
-      "HA(composite) wB=0.67 | poolA+B",
-      "HA(composite) wB=0.67 | poolB",
-      "H wB=1.0 +U+C | poolB",
-      "B: solution B recipe",
-      "H wB=1.0 | poolB",
-      "H wB=1.0 +U+C | poolA+B",
+      "H wB=0.8 | poolA+B",
       "H wB=0.8 gated +U0.1 | poolA+B",
-      "H wB=1.0 | poolA+B",
-      "H wB=0.8 gated +U0.2 | poolA",
-      "H wB=0.8 +U+C | poolA",
-      "H wB=0.67 gated +U0.15 | poolB",
-      "H wB=0.8 gated +U0.15 | poolB",
-      "H wB=0.8 gated +U0.15 | poolA+B",
-      "H wB=0.67 gated +U0.15 | poolA",
-      "H wB=0.8 +U+C | poolB",
-      "H wB=0.5 gated | poolB",
-      "H wB=0.67 gated | poolA",
-      "H wB=0.67 gated +U0.1 | poolA+B",
-      "H wB=0.67 gated +U0.1 | poolB",
-      "H wB=0.8 gated +U0.2 | poolB",
-      "H wB=0.67 gated +U0.2 | poolA"
+      "H wB=0.8 gated +U0.1 | poolA",
+      "H wB=0.67 gated | poolA"
     ]
   }
 }

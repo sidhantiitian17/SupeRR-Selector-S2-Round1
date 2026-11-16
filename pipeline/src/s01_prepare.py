@@ -44,13 +44,15 @@ def main():
     b["is_legal"] = ~(b.is_wide | b.is_noball)
     b["faced"] = ~b.is_wide  # a no-ball counts as a ball faced by the batter
     b["bat_runs"] = b.runs
-    # Runs on the delivery for the team. The feed stores the extras *type* in
-    # extras1_runs (a code) and extra runs from no-ball byes in extras_2_runs;
-    # one-run penalty for wide/no-ball and an (approximate) 1 for byes/leg-byes.
-    b["team_runs"] = (b.runs + b.extras_2_runs + (b.is_wide | b.is_noball).astype(int)
-                      + et.isin(["byes", "legbyes"]).astype(int) + 5 * et.eq("Penalty").astype(int))
-    # runs charged to the bowler (byes/leg-byes are not)
-    b["bowl_runs"] = b.runs + (b.is_wide | b.is_noball).astype(int)
+    # Runs on the delivery for the team. extras1_runs holds the extra runs on the
+    # ball (wide / no-ball penalty plus any runs taken off it, byes, leg-byes,
+    # penalty runs); extras_2_runs holds byes / leg-byes taken off a no-ball.
+    ex1 = pd.to_numeric(b.extras1_runs, errors="coerce").fillna(0)
+    ex2 = pd.to_numeric(b.extras_2_runs, errors="coerce").fillna(0)
+    b["team_runs"] = b.runs + ex1 + ex2
+    # runs charged to the bowler: bat runs plus wides and no-ball penalties
+    # (byes / leg-byes, including those off a no-ball, are not charged)
+    b["bowl_runs"] = b.runs + ex1 * (b.is_wide | b.is_noball).astype(int)
     b["is_wicket"] = b.is_wicket.astype(bool)
     dt = b.dismissal_type.fillna("")
     b["bowler_wkt"] = b.is_wicket & ~dt.isin(["RunOut", "Retire Out", "Obstracting the field", "Obstructing the field"])
@@ -94,7 +96,7 @@ def main():
     gap = (ch.tgt - ch.tot).clip(lower=0)
     print(f"[QA] deliveries={len(b):,} matches={b.match_id.nunique()} | "
           f"winning chases whose reconstructed total reaches target: {reached:.1%} "
-          f"(median shortfall {gap.median():.0f}, mean {gap.mean():.2f} runs - byes/leg-bye/wide run counts are not in the feed)")
+          f"(median shortfall {gap.median():.0f}, mean {gap.mean():.2f} runs)")
 
     keep = ["match_id", "comp_id", "comp_kind", "year", "match_date", "stage", "knock_out", "innings",
             "innings_ball_num", "over_no", "phase", "batting_team_id", "bowling_team_id", "bat_tier", "bowl_tier",

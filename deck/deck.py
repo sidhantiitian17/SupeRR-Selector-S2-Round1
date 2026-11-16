@@ -43,6 +43,25 @@ def ph(pid, w, h, x=None, y=None, style=""):
 
 TOPB = D["top"]["bat"]; TOPW = D["top"]["bowl"]
 PROF = {r["name"]: r for r in D["profiles"]["bat"] + D["profiles"]["bowl"]}
+M = D["method"]; ROWS = M["rows"]; NCAND = M["n_cand"]
+CHECKS = f'{D["verify"]["checks"]:,}'
+GAIN = {r: ROWS[r]["final"]["mean"] for r in ("bat", "bowl")}
+DEF0 = next(d_ for d_ in D["definitions"] if d_["definition"].startswith("PI"))
+DEC = f'{DEF0["decisiveness ratio"]:.2f}×'
+OTHER_DEC = sorted(d_["decisiveness ratio"] for d_ in D["definitions"] if not d_["definition"].startswith("PI"))
+AUC1, AUC2 = D["wp_metrics"][0]["auc"], D["wp_metrics"][1]["auc"]
+G_RR = {(r["side"], r["seg"]): r for r in D["rr_gaps"]}
+NSPEC = {"bat": TOPB[0]["n_specs"], "bowl": TOPW[0]["n_specs"]}
+
+
+def initials(name):
+    return "".join(w[0] for w in name.replace("-", " ").split()[:2]).upper()
+
+
+def pimg(pid, name, fs=34):
+    """Photo if the repo has one, otherwise the player's initials."""
+    src = photo(pid)
+    return f'<img src="{src}"/>' if src else f'<div class="mono-ini" style="font-size:{fs}px">{initials(name)}</div>'
 
 
 # =========================================================================================== 1 COVER
@@ -70,7 +89,7 @@ def s_cover(n):
         b.append(ph(p["pid"], 440, 380, x, 230))
         b.append(box(x + 16, 246, 0, 0, chip(role, col, True)))
         b.append(box(x, 622, 440, 0, f'<div class="h3" style="font-size:20px">{p["player"]}</div><div class="s m">{stat} · top 10 in {p["p_top10"]}% of resamples</div>'))
-    stats = [("837", "matches"), ("193,988", "deliveries"), ("5 yrs", "IPL + T20I, 2022–26"), ("10 + 10", "most reliable")]
+    stats = [(f'{D["n_matches"]}', "matches"), (f'{D["n_balls"]:,}', "deliveries"), ("5 yrs", "IPL + T20I, 2022–26"), ("10 + 10", "most reliable")]
     sx = 620
     for i, (a, l) in enumerate(stats):
         b.append(card(sx + i * 232, 694, 214, 100, f'<div class="big pk" style="font-size:36px">{a}</div><div class="s m" style="margin-top:8px">{l}</div>'))
@@ -120,7 +139,7 @@ def s_problem(n):
     b.append(pill(970, 580, 260, "WHAT WE DELIVER", C["jersey"], 32, 14))
     items = [("trophy", "Top 10 batters + top 10 bowlers", "ranked by a rating chosen on unseen matches"),
              ("flag", "An IPL 2027 plan for RR", "pressure gaps by phase, player fit, availability"),
-             ("chart", "Interactive dashboard", "every number checked against the pipeline (10,172 checks)"),
+             ("chart", "Interactive dashboard", f"every number checked against the pipeline ({CHECKS} checks)"),
              ("code", "One-command reproduction", "raw CSVs → final lists → report, seed 42")]
     for i, (ic, a, s) in enumerate(items):
         b.append(box(972, 628 + i * 54, 580, 50, f'<div style="display:flex;gap:12px;align-items:center"><div style="width:40px;height:40px;border-radius:10px;background:{C["panel2"]};display:grid;place-items:center">{icon(ic, 21, C["pink"])}</div><div><div class="h3">{a}</div><div class="xs m">{s}</div></div></div>'))
@@ -155,14 +174,14 @@ def s_data(n):
     # QA cards
     b.append(pill(1000, 476, 566, "DATA QUALITY CHECKS", C["magenta"], 34, 14))
     qa = [("check", C["good"], "State rebuilt for every ball", "score, wickets, balls left, target and required rate before each delivery"),
-          ("alert", C["warn"], "Extras are partly missing", "feed omits runs beyond the first on wides/byes/leg-byes: winning chases reconstruct exactly 73.9% of the time, mean 1.1 run short"),
+          ("check", C["good"], "Scores reconcile with results", "team runs = bat runs + recorded extras: 404 of 406 winning chases (99.5%) reach the target; the 2 others are DLS games"),
           ("check", C["good"], "Out-of-fold everything", "every model prediction for a match comes from models that never saw that match (5 folds grouped by match)"),
           ("check", C["good"], "Eligibility", "≥150 pressure balls, ≥12 matches, ≥150 usual balls; removes 80–90-ball flukes")]
     for i, (ic, col, a, s) in enumerate(qa):
         b.append(box(1004, 524 + i * 78, 560, 72, f'<div style="display:flex;gap:12px"><div style="flex:none;width:34px;height:34px;border-radius:50%;background:{C["panel2"]};display:grid;place-items:center">{icon(ic, 18, col)}</div><div><div class="h3">{a}</div><div class="xs m">{s}</div></div></div>'))
     b.append(card(34, 706, 926, 146, '<div class="h3">Why IPL and T20I together?</div><div class="s m" style="margin-top:6px">The brief covers both. Pooling doubles the pressure sample for most players; competition is a feature in every expectation model, so a T20I ball is compared with T20I balls. IPL-only and T20I-only re-rankings are part of the robustness checks (slide 14).</div>'
                      f'<div style="margin-top:10px;display:flex;gap:8px">{chip("IPL", BAT, True)}{chip("T20I", BOWL, True)}{chip("2022 → 2026", C["muted"])}{chip("seed 42", C["muted"])}</div>'))
-    return slide(n, "Data: from six CSVs to 193,988 modelled balls", "DATA & PRESSURE", "".join(b),
+    return slide(n, f"Data: from six CSVs to {D['n_balls']:,} modelled balls", "DATA & PRESSURE", "".join(b),
                  notes="Six raw files are joined and the full game state is rebuilt before each ball. Scope and quality checks are listed on the right.")
 
 
@@ -176,7 +195,7 @@ def s_pipeline(n):
              ("s03", "Value", "scale", "expected-outcome models → value of each ball", "deliveries_value"),
              ("s05", "Validate", "shield", "test pressure definitions, thresholds, rating models", "val_*.csv, weights"),
              ("s04", "Solution A", "brain", "context-adjusted, shrunk ratings", "ratings_*.csv"),
-             ("s07", "Tournament", "trophy", "A vs B vs 45+ hybrids on unseen matches", "hyb_selection.csv"),
+             ("s07", "Tournament", "trophy", f"A vs B vs {NCAND} candidates on unseen matches", "hyb_selection.csv"),
              ("s08", "Final lists", "star", "chosen recipe, bootstrap, robustness", "FINAL_TOP10_HYBRID.csv"),
              ("s09", "Report", "file", "methodology PDF, figures", "report.pdf")]
     xs = [34, 424, 814, 1204]
@@ -196,13 +215,13 @@ def s_pipeline(n):
     # solution B joins at the tournament
     g.node("B", 814, 560, 330, 92, f'<b>{icon("brain", 18, C["violet"])} Solution B (independent build)</b><small>pressure strike rate; shrunk economy + win probability added</small>', "node violet")
     g.edge("B", "s07", "t", "b", color=C["violet"], label="competes in", lab_dx=48, lab_dy=4)
-    g.node("dash", 34, 560, 330, 92, f'<b>{icon("chart", 18, C["blue"])} Dashboard build + verifier</b><small>10,172 checks: every number on screen vs pipeline</small>', "node blue")
+    g.node("dash", 34, 560, 330, 92, f'<b>{icon("chart", 18, C["blue"])} Dashboard build + verifier</b><small>{CHECKS} checks: every number on screen vs pipeline</small>', "node blue")
     g.edge("s08", "dash", "b", "t", color=C["blue"], label="feeds")
     b.append(g.render())
     b.append(card(34, 680, 1530, 170, ""))
     b.append(pill(54, 696, 280, "ONE COMMAND", C["jersey"], 32, 14, "code"))
     b.append(box(54, 744, 600, 0, f'<div class="mono" style="font-size:20px;background:{C["bg"]};border-radius:10px;padding:14px 18px;color:{C["text"]}">$ ./reproduce.sh</div><div class="s m" style="margin-top:10px">~45–60 min on 2 CPUs. Seed 42. All settings in <span class="mono">pipeline/src/config.py</span>.</div>'))
-    facts = [("40 / 40", "data files reproduced exactly from a clean clone"), ("10,172", "dashboard checks, 0 failed"), ("9", "pipeline steps, each writes its own outputs")]
+    facts = [("40 / 40", "data files reproduced exactly from a clean clone"), (CHECKS, "dashboard checks, 0 failed"), ("9", "pipeline steps, each writes its own outputs")]
     for i, (a, s) in enumerate(facts):
         b.append(box(720 + i * 280, 724, 260, 0, f'<div class="big pk" style="font-size:40px">{a}</div><div class="s m" style="margin-top:8px">{s}</div>'))
     return slide(n, "End-to-end pipeline", "DATA & PRESSURE", "".join(b),
@@ -255,9 +274,9 @@ def s_validate(n):
     hs = D["hp_phase_share"]
     b.append(card(810, 492, 756, 360, ""))
     b.append(pill(830, 508, 330, "WHAT THE CHECKS SHOWED", C["jersey"], 32, 14))
-    pts = [f'Leverage puts <b class="pk">2.06×</b> its share of match-deciding swing into flagged balls; rule-based definitions only ~1.2–1.3×.',
+    pts = [f'Leverage puts <b class="pk">{DEC}</b> its share of match-deciding swing into flagged balls; the alternatives only {OTHER_DEC[0]:.2f}–{OTHER_DEC[-1]:.2f}×.',
            f'Pressure is spread over the innings: <b>{hs["PP"]:.0f}%</b> of pressure balls are in the powerplay, <b>{hs["MID"]:.0f}%</b> in the middle overs, <b>{hs["DEATH"]:.0f}%</b> at the death.',
-           'Reliability is a plateau (ρ ≈ 0.23–0.33) from top 40% to top 15%. Top 30% sits on it and keeps ~150 players per role eligible; top 15% would leave ~90.',
+           f'Reliability is a plateau (ρ ≈ {min(t["quality_rho"] for t in D["threshold"]):.2f}–{max(t["quality_rho"] for t in D["threshold"]):.2f}) from top 40% to top 15%. Top 30% sits on it and keeps ~{round(sum(t["n_players"] for t in D["threshold"] if t["top_share"] == "top 30%") / 2, -1):.0f} players per role eligible; top 15% would leave ~{round(sum(t["n_players"] for t in D["threshold"] if t["top_share"] == "top 15%") / 2, -1):.0f}.',
            'Wickets in hand matter: 4 down in over 15 of a chase is far more pressure than 1 down.']
     b.append(box(830, 556, 720, 0, "<ul class='b'>" + "".join(f"<li class='p'>{p}</li>" for p in pts) + "</ul>"))
     segs = [("Powerplay", hs["PP"], C["pink"]), ("Middle overs", hs["MID"], C["magenta"]), ("Death", hs["DEATH"], C["jersey"])]
@@ -325,11 +344,11 @@ def s_shrink(n):
     b.append(card(34, 632, 1532, 220, ""))
     b.append(pill(54, 648, 420, "CONCEPT 4 · HOW SURE ARE WE? (BOOTSTRAP)", C["jersey"], 32, 14))
     g = Graph()
-    g.node("m", 54, 706, 220, 120, f'<b>{icon("db", 16, C["pink"])} 837 matches</b><small>the real history</small>', "node")
+    g.node("m", 54, 706, 220, 120, f'<b>{icon("db", 16, C["pink"])} {D["n_matches"]} matches</b><small>the real history</small>', "node")
     g.node("rs", 330, 706, 260, 120, f'<b>{icon("repeat", 16, C["pink"])} Resample 300×</b><small>draw matches with replacement: some appear twice, some not at all</small>', "node")
     g.node("rr", 646, 706, 250, 120, f'<b>{icon("chart", 16, C["pink"])} Re-rate every time</b><small>same recipe, new sample → new top 10</small>', "node")
     g.node("p", 952, 706, 260, 120, f'<b>{icon("target", 16, "#fff")} P(top 10)</b><small>share of the 300 runs where the player stays in the top 10</small>', "node pinkfill")
-    g.node("sp", 1268, 706, 280, 120, f'<b>{icon("layers", 16, C["blue"])} + robustness checks</b><small>re-rank under 12 (bat) / 39 (bowl) alternative specs: IPL-only, T20I-only, other thresholds, near-best methods</small>', "node blue")
+    g.node("sp", 1268, 706, 280, 120, f'<b>{icon("layers", 16, C["blue"])} + robustness checks</b><small>re-rank under {NSPEC['bat']} (bat) / {NSPEC['bowl']} (bowl) alternative specs: IPL-only, T20I-only, other thresholds, near-best methods</small>', "node blue")
     g.edge("m", "rs").edge("rs", "rr").edge("rr", "p").edge("p", "sp", dash=True)
     b.append(g.render())
     return slide(n, "Concepts 3 & 4: small samples and certainty", "METHOD", "".join(b),
@@ -341,7 +360,7 @@ def s_shrink(n):
 @add
 def s_journey(n):
     b = []
-    steps = [("0", "Simplest ideas", "rank by raw pressure SR / economy or most pressure balls", "volume ≈ random; finishers dominate", "drop"),
+    steps = [("0", "Simplest ideas", "rank by raw pressure SR / economy or most pressure balls", "worst cells no safer than random; finishers dominate", "drop"),
              ("1", "Define pressure", "rules vs stress score vs model leverage", "leverage 2× decisive share → adopted", "keep"),
              ("2", "A v1", "runs above expected, one joint shrinkage", "reliability 0.01 / 0.07: one dismissal swamps signal", "drop"),
              ("3", "A v2", "shrink runs and wickets separately", "small gain (0.04 / 0.05)", "step"),
@@ -351,7 +370,7 @@ def s_journey(n):
              ("7", "A v6", "blend direct + hierarchical, usual level, consistency", "0.22 / 0.17; predicts 2025–26 from 2022–24", "keep"),
              ("8", "Solution B", "independent: pressure SR, economy + WPA", "strong on strike rate, ignores dismissals", "keep"),
              ("9", "A vs B", "same unseen splits, 8 targets", "no overall winner: each found something", "step"),
-             ("10", "Hybrid tournament", "60+ blends, 3 pools, gates, extra terms", "beats both parents on worst case", "keep"),
+             ("10", "Hybrid tournament", f"{NCAND} candidates, 3 pools, gates, extra terms", "beats both parents on worst case", "keep"),
              ("11", "Brief constraint", "must score pressure vs usual level", "bowler score gains uplift term", "keep")]
     col = {"keep": C["good"], "drop": C["bad"], "step": C["blue"]}
     lab = {"keep": "KEPT", "drop": "DROPPED", "step": "STEP"}
@@ -374,8 +393,11 @@ def s_journey(n):
     b.append(g.render())
     b.append(box(34, 456, 900, 0, f'<div class="xs m">Reliability pairs = split-half ρ for batters / bowlers. {chip("KEPT", C["good"], True)} {chip("STEP", C["blue"], True)} {chip("DROPPED", C["bad"], True)}</div>'))
     # staircase
-    st_b = [("Random 10", -.068, -.191, "base"), ("Most pressure balls", .227, -.190, "base"), ("Raw pressure SR", .312, -.223, "base"), ("Solution A", .277, -.002, "A"), ("Solution B", .324, -.192, "B"), ("FINAL hybrid", .321, -.004, "final")]
-    st_w = [("Random 10", .040, -.111, "base"), ("Most pressure balls", .038, -.252, "base"), ("Raw pressure economy", .163, -.093, "base"), ("Solution A", .158, -.129, "A"), ("Solution B", .209, .018, "B"), ("FINAL hybrid", .213, .040, "final")]
+    def stair(role, rawlab):
+        R = ROWS[role]
+        return [(lab, R[k]["mean"], R[k]["worst"], t) for lab, k, t in (("Random 10", "random", "base"), ("Most pressure balls", "volume", "base"), (rawlab, "raw", "base"),
+                                                                         ("Solution A", "A", "A"), ("Solution B", "B", "B"), ("FINAL hybrid", "final", "final"))]
+    st_b, st_w = stair("bat", "Raw pressure SR"), stair("bowl", "Raw pressure economy")
     for j, (title, data, c) in enumerate((("Batters", st_b, BAT), ("Bowlers", st_w, BOWL))):
         x = 34 + j * 774
         b.append(card(x, 488, 758, 364, f'<div class="h2">{title}: every step scored on unseen matches</div><div class="xs m">Filled = average gain of the picked top 10 over the pool (in pool SDs); outline = worst of 16 held-out cells</div>'))
@@ -389,11 +411,11 @@ def s_journey(n):
 def s_tournament(n):
     b = []
     g = Graph()
-    g.node("m", 34, 104, 210, 96, f'<b>{icon("db", 16, C["pink"])} 837 matches</b>', "node")
+    g.node("m", 34, 104, 210, 96, f'<b>{icon("db", 16, C["pink"])} {D["n_matches"]} matches</b>', "node")
     g.node("r", 300, 100, 260, 72, f'<b>{icon("dice", 16, C["pink"])} 30 random half-splits</b>', "node")
     g.node("f", 300, 188, 260, 72, f'<b>{icon("clock", 16, C["pink"])} 6 past → future cuts</b><small>train on first 50–85% by date</small>', "node")
     g.edge("m", "r", "r", "l").edge("m", "f", "r", "l")
-    g.node("c", 614, 104, 270, 150, f'<b>{icon("users", 16, C["pink"])} 60+ candidates per role</b><small>A, B, blends (weights 0.33–1.0), 3 pool rules, ± usual-level & consistency terms, ± gate, simple baselines</small>', "node")
+    g.node("c", 614, 104, 270, 150, f'<b>{icon("users", 16, C["pink"])} {NCAND} candidates per role</b><small>A, B, blends (weights 0.33–1.0), 3 pool rules, ± usual-level & consistency terms, ± gate, simple baselines</small>', "node")
     g.edge("r", "c", "r", "l", tb=0.3).edge("f", "c", "r", "l", tb=0.75)
     g.node("t", 34, 286, 360, 150, f'<b>{icon("target", 16, C["pink"])} 8 targets × 2 schemes = 16 cells</b><small>batters: strike rate, runs above expected, win prob. added, dismissal avoidance · bowlers: economy, runs saved, win prob. added, wickets — each under both pressure definitions, measured only on unseen matches</small>', "node")
     g.node("gain", 430, 286, 210, 150, f'<b>{icon("chart", 16, C["pink"])} Gain</b><small>(mean target of the picked 10 − pool mean) ÷ pool SD</small>', "node")
@@ -403,10 +425,18 @@ def s_tournament(n):
     b.append(g.render())
     b.append(card(34, 454, 850, 398, ""))
     b.append(pill(54, 470, 360, "RESULT ON THE SAME 16 CELLS", C["jersey"], 32, 14))
-    rows = [("Solution A", "−0.002", "0.277", "−0.129", "0.158", ""), ("Solution B", "−0.192", "0.324", "+0.018", "0.209", ""), ("Final hybrid", "−0.004", "0.321", "+0.040", "0.213", "hl")]
+    rows = [(lab, f'{ROWS["bat"][k]["worst"]:+.3f}', f'{ROWS["bat"][k]["mean"]:.3f}', f'{ROWS["bowl"][k]["worst"]:+.3f}', f'{ROWS["bowl"][k]["mean"]:.3f}', h)
+            for lab, k, h in (("Solution A", "A", ""), ("Solution B", "B", ""), ("Final hybrid", "final", "hl"))]
     tr = "".join(f'<tr class="{h}"><td>{a}</td><td>{w1}</td><td>{m1}</td><td>{w2}</td><td>{m2}</td></tr>' for a, w1, m1, w2, m2, h in rows)
     b.append(box(54, 518, 810, 0, f'<table class="t"><tr><th>Method</th><th>Bat worst</th><th>Bat mean</th><th>Bowl worst</th><th>Bowl mean</th></tr>{tr}</table>'))
-    b.append(box(54, 652, 810, 0, '<ul class="b"><li class="p">Batters: the hybrid keeps A\'s safety (worst cell ≈ 0) and B\'s average gain.</li><li class="p">Bowlers: the hybrid has the best worst cell of any eligible candidate.</li><li class="p">Cost of the brief\'s usual-level rule for bowlers: best unconstrained candidate +0.028 / 0.228 vs chosen +0.040 / 0.213 — we followed the brief.</li></ul>'))
+    def beats(role):
+        R = ROWS[role]; f = R["final"]
+        w = "best worst cell of the three" if f["worst"] >= max(R["A"]["worst"], R["B"]["worst"]) else "not the best worst cell"
+        m = "and the best mean" if f["mean"] >= max(R["A"]["mean"], R["B"]["mean"]) else f'with a mean between A ({R["A"]["mean"]:.3f}) and B ({R["B"]["mean"]:.3f})'
+        return f"{w}, {m}"
+    U = {r: ROWS[r]["unconstrained"] for r in ("bat", "bowl")}
+    cost = "; ".join(f'{"batters" if r == "bat" else "bowlers"}: best unconstrained {U[r]["worst"]:+.3f} / {U[r]["mean"]:.3f} vs chosen {ROWS[r]["final"]["worst"]:+.3f} / {ROWS[r]["final"]["mean"]:.3f}' for r in ("bat", "bowl"))
+    b.append(box(54, 652, 810, 0, f'<ul class="b"><li class="p">Batters: the hybrid has the {beats("bat")}.</li><li class="p">Bowlers: the hybrid has the {beats("bowl")}.</li><li class="p">Cost of the brief\'s usual-level rule ({cost}): we followed the brief.</li></ul>'))
     for j, (role, c, title) in enumerate((("bat", BAT, "Batter candidates"), ("bowl", BOWL, "Bowler candidates"))):
         y = 96 + j * 382
         b.append(card(900, y, 666, 372, f'<div class="h3">{title} (each dot = one recipe)</div>'))
@@ -418,39 +448,51 @@ def s_tournament(n):
 # =========================================================================================== 11 RECIPES
 @add
 def s_recipes(n):
+    import re
     b = []
     for j, role in enumerate(("bat", "bowl")):
         x0 = 34 + j * 774; c = BAT if role == "bat" else BOWL
+        name, parts = M["chosen"][role], M["parts"][role]
+        wb = float(re.search(r"wB=([0-9.]+)", name).group(1)); wa = 1 - wb
+        mu = re.search(r"\+U([0-9.]+)", name)
+        wu = 0.1 if "+U+C" in name else (float(mu.group(1)) if mu else 0.0)
+        wcore = 0.8 if "+U+C" in name else 1 - wu
         b.append(card(x0, 96, 758, 600, ""))
         b.append(pill(x0 + 20, 112, 300, "BATTER SCORE" if role == "bat" else "BOWLER SCORE", c, 34, 15, "bat" if role == "bat" else "ball"))
         g = Graph()
+        g.node("F", x0 + 20, 380, 170, 90, f'<b>Final {"batter" if role == "bat" else "bowler"} score</b><small>z-scored, higher = better</small>', "node pinkfill" if role == "bat" else "node solid")
+        blab = "B strike-rate ensemble" if role == "bat" else "B economy + WPA"
+        alab = "A composite" if parts["composite"] else "A rating"
+        g.node("H", x0 + 260, 196, 210, 110, f'<b>{icon("layers", 15, HY)} Rating blend</b><small>{wa:.2f} × {alab} + {wb:.2f} × {blab}</small>', "node hot")
+        g.edge("H", "F", "l", "r", tb=0.2, color=HY, label=f"× {wcore:.2f}")
         if role == "bat":
-            g.node("F", x0 + 20, 380, 170, 90, '<b>Final batter score</b><small>z-scored, higher = better</small>', "node pinkfill")
-            g.node("A", x0 + 260, 250, 210, 92, f'<b>{icon("brain", 15, SA)} A composite</b><small>context-adjusted, shrunk</small>', "node blue")
-            g.node("B", x0 + 260, 520, 210, 92, f'<b>{icon("zap", 15, SB)} B strike-rate ensemble</b><small>no shrinkage</small>', "node violet")
-            g.edge("A", "F", "l", "r", tb=0.3, color=SA, label="× 0.67").edge("B", "F", "l", "r", tb=0.7, color=SB, label="× 0.33")
-            for i, (k, t1, t2, w) in enumerate([("a1", "Pressure rating", "runs above expected, 50/50 direct + hierarchical", "0.51"), ("a2", "Uplift", "pressure level − own usual level", "0.15"), ("a3", "Consistency", "share of pressure matches with a top-quartile contribution", "0.34")]):
-                g.node(k, x0 + 530, 156 + i * 100, 210, 92, f'<b style="justify-content:space-between">{t1} {chip("× " + w, SA, True)}</b><small>{t2}</small>', "node")
-                g.edge(k, "A", "l", "r", tb=0.2 + i * 0.3)
-            for i, (k, t1, t2) in enumerate([("b1", "SR at leverage pct 75+", "top quarter of balls in each innings"), ("b2", "SR at leverage pct 85+", "top 15%")]):
-                g.node(k, x0 + 530, 470 + i * 104, 210, 88, f'<b>{t1}</b><small>{t2}</small>', "node")
-                g.edge(k, "B", "l", "r", tb=0.3 + i * 0.4)
+            leaves = [("a1", "A pressure rating", "runs above expected, shrunk", f"{wa:.2f}", SA),
+                      ("b1", "B: SR at leverage pct 75+", "top quarter of balls in each innings", "", SB),
+                      ("b2", "B: SR at leverage pct 85+", f"top 15%; with pct 75+ = B (× {wb:.2f})", "", SB)]
         else:
-            g.node("F", x0 + 20, 380, 170, 90, '<b>Final bowler score</b><small>z-scored, higher = better</small>', "node solid")
-            g.node("H", x0 + 260, 250, 210, 100, f'<b>{icon("layers", 15, HY)} Rating blend</b><small>0.2 × A rating + 0.8 × B economy + WPA</small>', "node hot")
-            g.node("U", x0 + 260, 520, 210, 92, f'<b>{icon("repeat", 15, C["good"])} Uplift</b><small>pressure − own usual level (the brief)</small>', "node good")
-            g.edge("H", "F", "l", "r", tb=0.3, color=HY, label="× 0.90").edge("U", "F", "l", "r", tb=0.7, color=C["good"], label="× 0.10")
-            for i, (k, t1, t2, w, cc) in enumerate([("a1", "A pressure rating", "runs saved vs expected, shrunk", "0.2", SA), ("b1", "B economy", "runs per ball at leverage pct 70+, shrunk (k = 500)", "", SB), ("b2", "B win prob. added", "per ball at pct 70+, shrunk; with economy = B (× 0.8)", "", SB)]):
-                g.node(k, x0 + 530, 150 + i * 102, 210, 88, f'<b style="justify-content:space-between">{t1} {chip("× " + w, cc, True) if w else ""}</b><small>{t2}</small>', "node", f"border-color:{cc}")
-                g.edge(k, "H", "l", "r", tb=0.2 + i * 0.3, color=cc)
-            g.node("gate", x0 + 530, 494, 210, 132, f'<b>{icon("lock", 15, C["warn"])} Delivered gate</b><small>a bowler whose observed pressure value is below league average cannot rank above one who delivered</small>', "node", f"border-color:{C['warn']}")
-            g.edge("gate", "U", "l", "r", dash=True, color=C["warn"])
+            leaves = [("a1", "A pressure rating", "runs saved vs expected, shrunk", f"{wa:.2f}", SA),
+                      ("b1", "B economy", "runs per ball at leverage pct 70+, shrunk (k = 500)", "", SB),
+                      ("b2", "B win prob. added", f"per ball at pct 70+, shrunk; with economy = B (× {wb:.2f})", "", SB)]
+        for i, (k, t1, t2, w, cc) in enumerate(leaves):
+            g.node(k, x0 + 530, 150 + i * 100, 210, 98, f'<b style="justify-content:space-between">{t1} {chip("× " + w, cc, True) if w else ""}</b><small>{t2}</small>', "node", f"border-color:{cc}")
+            g.edge(k, "H", "l", "r", tb=0.2 + i * 0.3, color=cc)
+        y = 440
+        if parts["uplift"]:
+            g.node("U", x0 + 260, y, 210, 88, f'<b>{icon("repeat", 15, C["good"])} Uplift</b><small>pressure − own usual level (the brief)</small>', "node good")
+            g.edge("U", "F", "l", "r", tb=0.55, color=C["good"], label=f"× {wu:.2f}")
+            y += 112
+        if "+U+C" in name:
+            g.node("C", x0 + 260, y, 210, 88, f'<b>{icon("target", 15, C["warn"])} Consistency</b><small>share of pressure matches with a top-quartile contribution</small>', "node", f"border-color:{C['warn']}")
+            g.edge("C", "F", "l", "r", tb=0.85, color=C["warn"], label="× 0.10")
+        if parts["gate"]:
+            g.node("gate", x0 + 530, 470, 210, 132, f'<b>{icon("lock", 15, C["warn"])} Delivered gate</b><small>a bowler whose observed pressure value is below league average cannot rank above one who delivered</small>', "node", f"border-color:{C['warn']}")
+            g.edge("gate", "U" if parts["uplift"] else "F", "l", "r", dash=True, color=C["warn"])
         b.append(g.render())
     b.append(card(34, 712, 1532, 140, ""))
     b.append(pill(54, 728, 220, "SAME FOR BOTH", C["jersey"], 32, 14))
-    b.append(box(300, 724, 1250, 0, '<ul class="b" style="columns:2;column-gap:40px"><li class="p">Pool: ≥150 pressure balls, ≥12 matches, ≥150 usual balls (won the pool test).</li><li class="p">IPL + T20I; Associates weighted 0.5; Elo inside the win-probability model.</li><li class="p">Weights in A\'s composite ∝ each part\'s split-half reliability; uplift floored at 0.15.</li><li class="p">Every number on these trees was chosen by the tournament, not by hand.</li></ul>'))
+    b.append(box(300, 724, 1250, 0, '<ul class="b" style="columns:2;column-gap:40px"><li class="p">Pool: ≥150 pressure balls, ≥12 matches, ≥150 usual balls (won the pool test).</li><li class="p">IPL + T20I; Associates weighted 0.5; Elo inside the win-probability model.</li><li class="p">The A rating shrinks run and wicket parts separately (empirical Bayes).</li><li class="p">Every weight on these trees was chosen by the tournament, not by hand.</li></ul>'))
     return slide(n, "The final recipes", "METHOD", "".join(b),
-                 notes="Batters: two thirds context-adjusted composite, one third pressure strike rate. Bowlers: 90% rating blend (mostly B's economy + WPA), 10% uplift, plus the delivered gate.")
+                 notes=f"Batters: {M['recipe']['bat']}. Bowlers: {M['recipe']['bowl']}.")
 
 
 # =========================================================================================== 12/13 TOP 10
@@ -480,7 +522,7 @@ def top_slide(n, role):
         else:
             verdict = chip(f"economy {dlt:+.2f} vs usual", C["good"] if dlt < -0.2 else C["bad"] if dlt > 0.2 else C["muted"])
         team = prof.get("last_ipl_team") or "T20I only"
-        inner = (f'<div class="ph" style="position:relative;width:100%;height:136px;margin-bottom:8px">{"<img src=" + chr(34) + photo(r["pid"]) + chr(34) + "/>" if photo(r["pid"]) else ""}'
+        inner = (f'<div class="ph" style="position:relative;width:100%;height:136px;margin-bottom:8px">{pimg(r["pid"], r["player"], 44)}'
                  f'<div style="position:absolute;left:8px;top:8px;width:34px;height:34px;border-radius:50%;background:{c};display:grid;place-items:center;font-family:Archivo;font-weight:900;font-size:16px">{r["rank"]}</div>'
                  f'<div style="position:absolute;right:8px;top:8px">{chip(str(r["p_top10"]) + "%", c, True)}</div></div>'
                  f'<div class="h3" style="font-size:16px">{r["player"]}</div><div class="xs m" style="margin-bottom:8px">{team} · specs {r["specs"]}/{r["n_specs"]}</div>'
@@ -511,15 +553,23 @@ def s_reliability(n):
         b.append(svg_abs(x + 16, 158, 472, 446, ch.ptop_bars(rows, 472, 446, c)))
     b.append(card(1074, 96, 492, 520, ""))
     b.append(pill(1094, 112, 300, "HOW TO READ THIS", C["jersey"], 32, 14))
-    b.append(box(1094, 160, 456, 0, '<ul class="b"><li class="p"><b>Ranks 1–4</b> in each list are well supported: high P(top 10) and most specifications agree.</li>'
+    def firm(rows):
+        k = 0
+        while k < len(rows) and rows[k]["p_top10"] >= 50:
+            k += 1
+        return k
+    fb, fw = firm(TOPB), firm(TOPW)
+    full = [r["player"] for r in TOPB + TOPW if r["specs"] == r["n_specs"]]
+    keep = {lab: sum(r["p_top10"] for r in rows) / 100 for lab, rows in (("bat", TOPB), ("bowl", TOPW))}
+    b.append(box(1094, 160, 456, 0, f'<ul class="b"><li class="p"><b>Batters 1–{fb}</b> and <b>bowlers 1–{fw}</b> stay in the top 10 in more than half of all resamples.</li>'
                                      '<li class="p"><b>Ranks 7–10</b> sit in a crowded band: the next 5–10 players are close.</li>'
-                                     '<li class="p">No method keeps more than ~6–7 of its 10 names across resamples. That is a limit of the data, not of one method.</li>'
-                                     '<li class="p">Hazlewood is top 10 in <b>39 of 39</b> specifications; Abhishek Sharma in <b>12 of 12</b>.</li></ul>'))
+                                     f'<li class="p">On average a resample keeps about {keep["bat"]:.0f} of the 10 batters and {keep["bowl"]:.0f} of the 10 bowlers. That is a limit of the data, not of one method.</li>'
+                                     f'<li class="p">Top 10 in every specification: <b>{", ".join(full)}</b>.</li></ul>'))
     b.append(card(34, 632, 1532, 220, ""))
     b.append(pill(54, 648, 300, "LIMITS WE STATE OPENLY", C["magenta"], 32, 14, "alert"))
-    lim = [("Modest predictive power", "+0.3 to +0.45 pool SD on unseen matches; wicket/dismissal targets are the noisiest"),
-           ("First innings is harder", "AUC 0.71: no target yet, so first-innings leverage is flatter"),
-           ("Missing extras", "runs beyond the first on wides/byes/leg-byes absent; chases ~1 run short"),
+    lim = [("Modest predictive power", f"+{GAIN['bat']:.2f} (bat) / +{GAIN['bowl']:.2f} (bowl) pool SD on unseen matches; wicket/dismissal targets are the noisiest"),
+           ("First innings is harder", f"AUC {AUC1:.2f}: no target yet, so first-innings leverage is flatter"),
+           ("Outside the data", "fielding, captaincy, venue and the non-striker's role are not modelled"),
            ("Cross-competition mix", "players whose pressure balls are mostly T20I (or mostly IPL) carry extra uncertainty")]
     for i, (a, s_) in enumerate(lim):
         b.append(box(54 + i * 378, 698, 360, 0, f'<div class="h3">{a}</div><div class="s m" style="margin-top:4px">{s_}</div>'))
@@ -549,10 +599,13 @@ def s_rrgaps(n):
     k = D["pick_bat"]["rr_mid"]
     b.append(card(950, 96, 616, 470, ""))
     b.append(pill(970, 112, 300, "THREE GAPS, ONE STRENGTH", C["magenta"], 32, 14))
-    items = [("bad", "Gap 1 · Middle-overs batting", f'#7 of 10. Against spin under pressure RR strike at <b>{k["rr_spin"]["sr"]:.0f}</b> vs league <b>{k["lg_spin"]["sr"]:.0f}</b> (value {k["rr_spin"]["v"]:+.1f} vs {k["lg_spin"]["v"]:+.1f}).'),
-             ("bad", "Gap 2 · Death bowling", f'#8 of 10, {G[("bowl", "DEATH")]["RR rpo"]:.2f} runs per over under pressure.'),
-             ("warn", "Gap 3 · Powerplay bowling", "#7 of 10: new-ball pressure overs leak."),
-             ("good", "Strength · Powerplay batting", "#1 of 10 (value +33.0 vs median +10.4): the openers already win pressure overs.")]
+    def gcol(r):
+        return "bad" if r["RR rank/10"] >= 7 else "warn" if r["RR rank/10"] >= 4 else "good"
+    g1, g2, g3, st = G[("bowl", "PP")], G[("bat", "MID")], G[("bat", "DEATH")], G[("bat", "PP")]
+    items = [(gcol(g1), "Gap 1 · Powerplay bowling", f'#{g1["RR rank/10"]} of 10: value {g1["RR val/100"]:+.1f} vs median {g1["median team"]:+.1f}, {g1["RR rpo"]:.2f} rpo vs {g1["median rpo"]:.2f}. New-ball pressure overs leak.'),
+             (gcol(g2), "Gap 2 · Middle-overs batting", f'#{g2["RR rank/10"]} of 10. Against spin under pressure RR strike at <b>{k["rr_spin"]["sr"]:.0f}</b> vs league <b>{k["lg_spin"]["sr"]:.0f}</b> (value {k["rr_spin"]["v"]:+.1f} vs {k["lg_spin"]["v"]:+.1f}).'),
+             (gcol(g3), "Gap 3 · Death batting", f'#{g3["RR rank/10"]} of 10, value {g3["RR val/100"]:+.1f} vs median {g3["median team"]:+.1f}: level with the league, not a strength.'),
+             ("good", "Strength · Powerplay batting", f'#{st["RR rank/10"]} of 10 (value {st["RR val/100"]:+.1f} vs median {st["median team"]:+.1f}): the openers already win pressure overs.')]
     for i, (kind, a, s_) in enumerate(items):
         colr = C[kind]
         b.append(box(972, 162 + i * 98, 576, 0, f'<div style="display:flex;gap:12px"><div style="flex:none;width:12px;height:12px;border-radius:50%;background:{colr};margin-top:6px"></div><div><div class="h3">{a}</div><div class="s m" style="margin-top:3px">{s_}</div></div></div>'))
@@ -574,36 +627,54 @@ def s_rrgaps(n):
 
 # =========================================================================================== 16/17 RR FIT
 AVAIL = {
-    "Vaibhav Sooryavanshi": ("RR", "retain"), "Priyansh Arya": ("PBKS", "release/trade"), "Heinrich Klaasen": ("SRH", "release/trade"),
-    "Abhishek Sharma": ("SRH", "release/trade"), "Suryakumar Yadav": ("MI", "release/trade"), "Travis Head": ("SRH", "release/trade"),
-    "Rovman Powell": ("KKR", "release/trade"), "Finn Allen": ("KKR", "release/trade"), "Phil Salt": ("RCB", "release/trade"), "Dewald Brevis": ("CSK", "release/trade"),
-    "Josh Hazlewood": ("RCB", "release/trade"), "Mujeeb Ur Rahman": ("no 2026 IPL team", "auction pool"), "Mohsin Khan": ("LSG", "release/trade"),
-    "Abrar Ahmed": ("Pakistan", "not in IPL pool"), "Jasprit Bumrah": ("MI", "release/trade"), "Mahedi Hasan": ("Bangladesh", "auction pool"),
-    "Varun Chakravarthy": ("KKR", "release/trade"), "Taskin Ahmed": ("Bangladesh", "auction pool"), "Mohammad Nawaz": ("Pakistan", "not in IPL pool"),
-    "Haris Rauf": ("Pakistan", "not in IPL pool")}
+    "Vaibhav Sooryavanshi": ("RR", "retain"), "Tim David": ("RCB", "release/trade"), "Abhishek Sharma": ("SRH", "release/trade"),
+    "Phil Salt": ("RCB", "release/trade"), "Rovman Powell": ("KKR", "release/trade"), "Travis Head": ("SRH", "release/trade"),
+    "Heinrich Klaasen": ("SRH", "release/trade"), "Suryakumar Yadav": ("MI", "release/trade"), "Tim Seifert": ("KKR", "release/trade"),
+    "Josh Inglis": ("LSG", "release/trade"),
+    "Josh Hazlewood": ("RCB", "release/trade"), "Jasprit Bumrah": ("MI", "release/trade"), "Taskin Ahmed": ("Bangladesh", "auction pool"),
+    "Mujeeb Ur Rahman": ("no 2026 IPL team", "auction pool"), "Abrar Ahmed": ("Pakistan", "not in IPL pool"), "Lockie Ferguson": ("PBKS", "release/trade"),
+    "Mustafizur Rahman": ("no 2026 IPL team", "auction pool"), "Rashid Khan": ("GT", "release/trade"), "Varun Chakravarthy": ("KKR", "release/trade"),
+    "Sunil Narine": ("KKR", "release/trade")}
 ACOL = {"retain": C["good"], "release/trade": C["warn"], "auction pool": C["blue"], "not in IPL pool": C["faint"]}
-FIT = {
-    "Vaibhav Sooryavanshi": ("core", "Already RR. 77% of his pressure balls are powerplay (+37.6/100): the engine of RR's #1 powerplay. Retain."),
-    "Priyansh Arya": ("low", "Powerplay opener (85% PP). Overlaps RR's strongest phase: backup only."),
-    "Heinrich Klaasen": ("high", "Gap 1. 67% middle overs (+36.7/100); vs spin under pressure SR 197. The cleanest fix for RR's middle-overs problem."),
-    "Abhishek Sharma": ("low", "Powerplay opener (72% PP). Elite, but RR's openers already top the league."),
-    "Suryakumar Yadav": ("high", "Gap 1. 63% of his pressure balls in the middle overs, +40.6/100 there. Only if MI let him go."),
-    "Travis Head": ("low", "Powerplay opener (85% PP). Overlaps RR's strength; overseas slot better spent elsewhere."),
-    "Rovman Powell": ("mid", "Finisher: 41% death (+58.4/100). Overseas cover for the death-overs batting slot."),
-    "Finn Allen": ("low", "Powerplay opener (86% PP). Overlap with RR's strength."),
-    "Phil Salt": ("low", "Powerplay opener (71% PP); middle-overs value −3.3/100."),
-    "Dewald Brevis": ("high", "Gap 1. 64% middle overs (+26.4/100); young, so a long-term middle-order option."),
-    "Josh Hazlewood": ("high", "Gaps 2 + 3. Powerplay +32.3/100 at 7.66 rpo and death +34.5/100: covers both RR bowling gaps. Overseas."),
-    "Mujeeb Ur Rahman": ("mid", "Spin: middle +21.2, death +48.7/100 but powerplay −13.9. Middle-overs bowling is not an RR gap; depth pick."),
-    "Mohsin Khan": ("high", "Gaps 2 + 3 without an overseas slot: powerplay +23.9, death +84.5/100 (7.65 rpo). No 2025 matches in the data; check fitness."),
-    "Abrar Ahmed": ("bench", "Not in the IPL pool. Benchmark profile: middle-overs leg-spin, +37.1/100."),
-    "Jasprit Bumrah": ("bench", "MI core player; a release is very unlikely. Benchmark for powerplay + death pressure."),
-    "Mahedi Hasan": ("mid", "Gap 3: powerplay spin +43.6/100 at 6.31 rpo; weak in middle overs (−47.3). Pool only if registered."),
-    "Varun Chakravarthy": ("low", "Middle-overs spin (64%): not an RR gap, and a KKR core player."),
-    "Taskin Ahmed": ("high", "Gaps 2 + 3: death +39.2/100 at 7.66 rpo, powerplay +18.6. Realistic auction-pool pace option if registered."),
-    "Mohammad Nawaz": ("bench", "Not in the IPL pool. Benchmark: middle-overs spin all-rounder."),
-    "Haris Rauf": ("bench", "Not in the IPL pool. Benchmark: death pace (36% death, +25.1/100)."),
-}
+
+
+def _f(name):
+    """Phase numbers for the fit texts, straight from the profiles."""
+    ph = PROF[name]["phases"]
+    return {p: (ph[p]["share"], ph[p]["v"], ph[p]["rpo"]) for p in ph}
+
+
+def _fit():
+    V, T, A, S, P, H, K, Y, E, I = (_f(x) for x in ("Vaibhav Sooryavanshi", "Tim David", "Abhishek Sharma", "Phil Salt", "Rovman Powell", "Travis Head",
+                                                     "Heinrich Klaasen", "Suryakumar Yadav", "Tim Seifert", "Josh Inglis"))
+    hz, bu, ta, mu, ab, lf, mr, rk, vc, sn = (_f(x) for x in ("Josh Hazlewood", "Jasprit Bumrah", "Taskin Ahmed", "Mujeeb Ur Rahman", "Abrar Ahmed", "Lockie Ferguson",
+                                                               "Mustafizur Rahman", "Rashid Khan", "Varun Chakravarthy", "Sunil Narine"))
+    vs = lambda n: PROF[n]["vs_spin"]["sr"]
+    return {
+        "Vaibhav Sooryavanshi": ("core", f"Already RR. {V['PP'][0]}% of his pressure balls are powerplay ({V['PP'][1]:+.1f}/100): the engine of RR's #1 powerplay. Retain."),
+        "Tim David": ("high", f"Gaps 3 + 2. Finisher: {T['DEATH'][0]}% death ({T['DEATH'][1]:+.1f}/100), {T['MID'][0]}% middle ({T['MID'][1]:+.1f}). Weak spot: SR {vs('Tim David'):.0f} vs spin under pressure."),
+        "Abhishek Sharma": ("low", f"Powerplay opener ({A['PP'][0]}% PP). Elite, but RR's openers already top the league."),
+        "Phil Salt": ("low", f"Powerplay opener ({S['PP'][0]}% PP). Overlaps RR's strongest phase; overseas slot better spent elsewhere."),
+        "Rovman Powell": ("high", f"Gaps 2 + 3. {P['MID'][0]}% middle overs ({P['MID'][1]:+.1f}/100) and {P['DEATH'][0]}% death ({P['DEATH'][1]:+.1f}). Overseas middle-to-death option."),
+        "Travis Head": ("low", f"Powerplay opener ({H['PP'][0]}% PP). Overlaps RR's strength."),
+        "Heinrich Klaasen": ("high", f"Gap 2. {K['MID'][0]}% middle overs ({K['MID'][1]:+.1f}/100), death {K['DEATH'][1]:+.1f}; vs spin under pressure SR {vs('Heinrich Klaasen'):.0f}. Best answer to RR's spin problem."),
+        "Suryakumar Yadav": ("high", f"Gap 2. {Y['MID'][0]}% of his pressure balls in the middle overs, {Y['MID'][1]:+.1f}/100 there. Only if MI let him go."),
+        "Tim Seifert": ("low", f"Powerplay opener ({E['PP'][0]}% PP). Overlap with RR's strength."),
+        "Josh Inglis": ("mid", f"Middle overs {I['MID'][0]}% ({I['MID'][1]:+.1f}/100), powerplay {I['PP'][0]}%: a keeper-batter for No. 3–4. Few death balls."),
+        "Josh Hazlewood": ("high", f"Gap 1. {hz['PP'][0]}% of his pressure balls in the powerplay ({hz['PP'][1]:+.1f}/100 at {hz['PP'][2]:.2f} rpo), death {hz['DEATH'][1]:+.1f}. The cleanest new-ball fix. Overseas."),
+        "Jasprit Bumrah": ("bench", "MI core player; a release is very unlikely. Benchmark for powerplay + death pressure."),
+        "Taskin Ahmed": ("high", f"Gap 1: powerplay {ta['PP'][1]:+.1f}/100 at {ta['PP'][2]:.2f} rpo, death {ta['DEATH'][1]:+.1f}. Realistic auction-pool pace option if registered."),
+        "Mujeeb Ur Rahman": ("mid", f"Powerplay spin ({mu['PP'][0]}% PP) but only {mu['PP'][1]:+.1f}/100 there; middle overs {mu['MID'][1]:+.1f}. Depth pick from the pool."),
+        "Abrar Ahmed": ("bench", f"Not in the IPL pool. Benchmark profile: middle-overs leg-spin, {ab['MID'][1]:+.1f}/100."),
+        "Lockie Ferguson": ("high", f"Gap 1. Powerplay {lf['PP'][1]:+.1f}/100 at {lf['PP'][2]:.2f} rpo, middle {lf['MID'][1]:+.1f}; death {lf['DEATH'][1]:+.1f} ({lf['DEATH'][2]:.2f} rpo), so new ball + middle only."),
+        "Mustafizur Rahman": ("mid", f"Gap 1: powerplay {mr['PP'][1]:+.1f}/100 at {mr['PP'][2]:.2f} rpo; death only {mr['DEATH'][1]:+.1f}. No 2026 IPL team: pool only if registered and cleared."),
+        "Rashid Khan": ("low", f"Middle-overs spin ({rk['MID'][0]}%): not an RR gap, and a GT core player."),
+        "Varun Chakravarthy": ("low", f"Middle-overs spin ({vc['MID'][0]}%): not an RR gap, and a KKR core player."),
+        "Sunil Narine": ("low", f"Middle-overs spin ({sn['MID'][0]}%, {sn['MID'][1]:+.1f}/100): not an RR gap, and a KKR core player."),
+    }
+
+
+FIT = _fit()
 FCOL = {"core": C["good"], "high": C["pink"], "mid": C["warn"], "low": C["faint"], "bench": C["faint"]}
 FLAB = {"core": "CORE", "high": "HIGH FIT", "mid": "SITUATIONAL", "low": "LOW FIT", "bench": "BENCHMARK"}
 
@@ -618,7 +689,7 @@ def fit_slide(n, role):
         row, col = divmod(i, 2)
         x = 34 + col * 772; y = 124 + row * 146
         prof = PROF[r["player"]]; team, av = AVAIL[r["player"]]; fit, txt = FIT[r["player"]]
-        img = f'<img src="{photo(r["pid"])}"/>' if photo(r["pid"]) else ""
+        img = pimg(r["pid"], r["player"], 30)
         inner = (f'<div style="display:grid;grid-template-columns:96px 176px 1fr;gap:12px;height:100%">'
                  f'<div class="ph" style="position:relative;height:118px">{img}<div style="position:absolute;left:5px;top:5px;width:26px;height:26px;border-radius:50%;background:{c};display:grid;place-items:center;font-family:Archivo;font-weight:900;font-size:13px">{r["rank"]}</div></div>'
                  f'<div><div class="h3" style="font-size:14px;white-space:nowrap">{r["player"]}</div><div class="xs m">{team}</div>'
@@ -646,13 +717,14 @@ def s_plan(n):
     b = []
     g = Graph()
     g.node("rr", 34, 330, 200, 130, f'<img src="{logo()}" style="height:70px;align-self:center"/><b style="justify-content:center">RR · IPL 2027</b>', "node", "align-items:center")
-    plans = [("p1", "1 · Retain the powerplay engine", "Vaibhav Sooryavanshi (#1 batter, 94% of resamples). Keeps RR's #1 powerplay.", [(50284, "Vaibhav")], C["good"]),
-             ("p2", "2 · Fix the middle overs (Gap 1)", "Target a middle-overs pressure batter, in order of fit and availability: Klaasen (SR 197 vs spin under pressure) → Suryakumar → Brevis.", [(4260, "Klaasen"), (1699, "SKY"), (25213, "Brevis")], C["pink"]),
-             ("p3", "3 · Death + new-ball pace (Gaps 2–3)", "Indian slot: Mohsin Khan. Overseas: Hazlewood if released; auction-pool option: Taskin Ahmed.", [(6669, "Mohsin"), (830, "Hazlewood"), (2681, "Taskin")], C["pink"]),
-             ("p4", "4 · Don't buy another opener", "Abhishek, Head, Allen, Salt, Priyansh are elite but play RR's strongest phase. Spend the purse on gaps.", [], C["faint"])]
+    kl = D["pick_bat"]; v0 = TOPB[0]; g1 = G_RR[("bowl", "PP")]
+    plans = [("p1", "1 · Retain the powerplay engine", f"Vaibhav Sooryavanshi (#1 batter, top 10 in {v0['p_top10']}% of resamples). Keeps RR's #1 powerplay.", [(50284, "Vaibhav")], C["good"]),
+             ("p2", "2 · Fix the new-ball bowling (Gap 1)", f"RR are #{g1['RR rank/10']} of 10 in powerplay pressure overs. Overseas: Hazlewood if released, then Ferguson; auction-pool pace: Taskin Ahmed, Mustafizur.", [(830, "Hazlewood"), (4692, "L Ferguson"), (2681, "Taskin")], C["pink"]),
+             ("p3", "3 · Middle + death batting (Gaps 2–3)", f"One overseas middle-to-death batter, in order of fit: Klaasen (SR {kl['spin']['sr']:.0f} vs spin under pressure) → Powell → Tim David. Suryakumar only if MI let him go.", [(4260, "Klaasen"), (4986, "Powell"), (6396, "T David")], C["pink"]),
+             ("p4", "4 · Don't buy another opener", "Abhishek, Head, Salt and Seifert are elite but play RR's strongest phase. Spend the purse on gaps.", [], C["faint"])]
     for i, (k, a, s_, pics, colr) in enumerate(plans):
         y = 96 + i * 186
-        thumbs = "".join(f'<div style="text-align:center"><div class="ph" style="position:relative;width:74px;height:74px">{"<img src=" + chr(34) + photo(pid) + chr(34) + "/>" if photo(pid) else ""}</div><div class="xs m" style="margin-top:3px">{nm}</div></div>' for pid, nm in pics)
+        thumbs = "".join(f'<div style="text-align:center"><div class="ph" style="position:relative;width:74px;height:74px">{pimg(pid, nm, 24)}</div><div class="xs m" style="margin-top:3px">{nm}</div></div>' for pid, nm in pics)
         g.node(k, 300, y, 760, 170, f'<div style="display:flex;gap:16px;align-items:center;height:100%"><div style="flex:1"><b style="font-size:17px">{a}</b><small style="font-size:14px;color:{C["text"]};margin-top:6px">{s_}</small></div><div style="display:flex;gap:10px">{thumbs}</div></div>', "node", f"border-color:{colr}")
         g.edge("rr", k, "r", "l", color=colr, ta=0.2 + i * 0.2)
     b.append(g.render())
@@ -666,7 +738,7 @@ def s_plan(n):
     b.append(card(1080, 492, 486, 360, ""))
     b.append(box(1100, 508, 140, 150, f'<img src="{photo(3298)}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:bottom"/>', "ph"))
     b.append(box(1256, 508, 290, 0, f'<div class="h3">Jofra Archer: data over reputation</div><div class="s m" style="margin-top:6px">Official <b class="pk">#{a["official"]}</b> bowler; top 10 in {a["ptop"] * 100:.1f}% of resamples. IPL 2026: {a["s26"]["w"]} wickets, pressure economy {a["s26"]["pm"]:.2f} vs {a["s26"]["um"]:.2f} usual.</div>'))
-    b.append(box(1100, 674, 446, 0, '<div class="s">Seasons under pressure (runs saved /100): ' + " · ".join(f'{s_["y"]} <b class="{"gd" if s_["v"] > 0 else "bd"}">{s_["v"]:+.1f}</b>' for s_ in a["seasons"]) + '</div><div class="s m" style="margin-top:8px">Valuable all-phase bowler, but his pressure numbers swing season to season. We keep him out of the top 10 and do not count him as RR\'s death-overs fix.</div>'))
+    b.append(box(1100, 674, 446, 0, f'<div class="s">Seasons under pressure (runs saved /100): ' + " · ".join(f'{s_["y"]} <b class="{"gd" if s_["v"] > 0 else "bd"}">{s_["v"]:+.1f}</b>' for s_ in a["seasons"]) + f'</div><div class="s m" style="margin-top:8px">Valuable all-phase bowler, but his pressure numbers swing season to season. RR\'s powerplay bowling ranked #{G_RR[("bowl", "PP")]["RR rank/10"]} of 10 with him in the side. We keep him out of the top 10.</div>'))
     return slide(n, "Our IPL 2027 recommendation for RR", "RR STRATEGY", "".join(b),
                  notes="Four moves in priority order, each tied to a measured gap. Archer stays outside the top 10 because the data say so; the watchlist shows recent-form names for context.")
 
@@ -680,7 +752,7 @@ def s_repro(n):
         b.append(card(x, 96, 504, 240, f'<div style="display:flex;gap:18px"><div style="border-radius:12px;overflow:hidden;flex:none">{qr_svg(url, 150)}</div><div><div class="h3" style="font-size:18px">{icon(ic, 19, C["pink"])} {a}</div><div class="s m" style="margin-top:6px">{s_}</div><div class="mono xs" style="margin-top:14px;word-break:break-all;color:{C["pink"]}"><a href="{url}">{short(url)}</a></div></div></div>'))
     b.append(card(1074, 96, 492, 240, ""))
     b.append(pill(1094, 112, 300, "VERIFIED", C["good"], 32, 14, "check"))
-    b.append(box(1094, 160, 456, 0, '<ul class="b good"><li class="p">Clean clone + rerun: all 40 data files, tables and figures identical; report text identical on all 10 pages.</li><li class="p">Dashboard: 10,172 checks recomputed from the pipeline, 0 failed.</li><li class="p">Seed 42, pinned package versions.</li></ul>'))
+    b.append(box(1094, 160, 456, 0, f'<ul class="b good"><li class="p">Clean clone + rerun: all 40 data files, tables and figures identical; report text identical on all 10 pages.</li><li class="p">Dashboard: {CHECKS} checks recomputed from the pipeline, 0 failed.</li><li class="p">Seed 42, pinned package versions.</li></ul>'))
     steps = [("1", "Clone", "git clone …/SupeRR-Selector-S2-Round1"), ("2", "Install", "pip install -r requirements.txt"), ("3", "Run", "./reproduce.sh  (≈45–60 min)"), ("4", "Check", "FINAL_TOP10_HYBRID.csv + '0 failed'"), ("5", "Explore", "open dashboard/dist/…html")]
     g = Graph()
     for i, (k, a, cmd) in enumerate(steps):
@@ -730,12 +802,12 @@ def s_annex_data(n):
         x = 34 + j * 520
         b.append(card(x, 96, 504, 400, f'<div class="h2">{"First innings" if inn == "1" else "Chasing innings"}</div><div class="xs m">Average Pressure Index by over × wickets lost</div>'))
         b.append(svg_abs(x + 14, 160, 476, 326, ch.heatmap(D["pressure_map"][inn], 476, 326)))
-    b.append(card(1074, 96, 492, 400, '<div class="h2">How pressure is distributed</div><div class="xs m">All 193,988 balls by Pressure Index (pink = top 30%)</div>'))
+    b.append(card(1074, 96, 492, 400, f'<div class="h2">How pressure is distributed</div><div class="xs m">All {D["n_balls"]:,} balls by Pressure Index (pink = top 30%)</div>'))
     b.append(svg_abs(1088, 160, 464, 326, ch.hist(D["pi_hist"], 464, 326, D["pi_cut"])))
     d0 = next(d_ for d_ in D["definitions"] if d_["definition"].startswith("PI"))
     facts = [("Pressure balls are not slower", f'run rate {d0["run rate (pressure)"]:.2f} under pressure vs {d0["run rate (routine)"]:.2f} routine; boundaries {d0["boundary % (pressure)"]:.1f}% vs {d0["boundary % (routine)"]:.1f}%'),
              ("…but mistakes cost more", f'dismissal {d0["dismissal % (pressure)"]:.2f}% vs {d0["dismissal % (routine)"]:.2f}% per ball, and each wicket swings the result further'),
-             ("Chases carry the sharpest pressure", "the second innings has a target, so every ball's swing is larger (AUC 0.896 vs 0.706)"),
+             ("Chases carry the sharpest pressure", f"the second innings has a target, so every ball's swing is larger (AUC {AUC2:.3f} vs {AUC1:.3f})"),
              ("Wickets in hand drive it", "the same over is far more pressured 4–5 down than 0–1 down (heatmaps)")]
     b.append(card(34, 512, 1532, 340, ""))
     b.append(pill(54, 528, 360, "WHAT THE EXPLORATION TOLD US", C["magenta"], 32, 14, "search"))
@@ -762,15 +834,16 @@ def s_annex_pick(n):
             ("Balls per dismissal", f'{k["pressure"]["pb"] / max(k["pressure"]["outs"], 1):.1f}', f'{k["usual"]["pb"] / max(k["usual"]["outs"], 1):.1f}'), ("Balls", f'{k["pressure"]["pb"]}', f'{k["usual"]["pb"]}')]
     b.append(box(1110, 160, 436, 0, '<table class="t"><tr><th></th><th>Pressure</th><th>Usual</th></tr>' + "".join(f'<tr><td>{a}</td><td><b class="{"" if a.startswith("Balls") else "pk"}">{x}</b></td><td>{y}</td></tr>' for a, x, y in rows) + '</table>'
                                     f'<div class="xs m" style="margin-top:10px">Pressure = Pressure Index top 30%, 2022–26. The report\'s leverage-percentile view gives the same picture: SR {r["P SR"]:.1f} vs {r["usual SR"]:.1f}.</div>'))
-    b.append(card(434, 472, 640, 380, '<div class="h2">Positive in every season</div><div class="xs m">Runs above expected per 100 pressure balls</div>'))
+    npos = sum(1 for x in k["seasons"] if x["v"] > 0)
+    b.append(card(434, 472, 640, 380, f'<div class="h2">Positive in {npos} of {len(k["seasons"])} seasons</div><div class="xs m">Runs above expected per 100 pressure balls</div>'))
     b.append(svg_abs(450, 540, 608, 300, ch.season_bars(k["seasons"], 608, 300, BAT)))
     b.append(card(1090, 472, 476, 380, ""))
     b.append(pill(1110, 488, 300, "THE HONEST CASE", C["magenta"], 32, 14))
-    b.append(box(1110, 536, 436, 0, f'<ul class="b"><li class="s">Middle overs {k["phases"]["MID"]["pb"]} balls (+{k["phases"]["MID"]["v"]:.1f}/100) and death {k["phases"]["DEATH"]["pb"]} balls (+{k["phases"]["DEATH"]["v"]:.1f}): exactly where RR rank 7th and 5th.</li>'
+    b.append(box(1110, 536, 436, 0, f'<ul class="b"><li class="s">Middle overs {k["phases"]["MID"]["pb"]} balls (+{k["phases"]["MID"]["v"]:.1f}/100) and death {k["phases"]["DEATH"]["pb"]} balls (+{k["phases"]["DEATH"]["v"]:.1f}): exactly where RR rank #{G_RR[("bat", "MID")]["RR rank/10"]} and #{G_RR[("bat", "DEATH")]["RR rank/10"]}.</li>'
                                     f'<li class="s">Chasing ({k["chase"]["v"]:+.1f}/100) and setting ({k["setting"]["v"]:+.1f}): delivers in both.</li>'
-                                    f'<li class="s">2025 was quiet ({k["seasons"][3]["v"]:+.1f}/100); 2026 back to {k["seasons"][4]["v"]:+.1f}.</li>'
+                                    f'<li class="s">2025 dipped ({k["seasons"][3]["v"]:+.1f}/100); 2026 back to {k["seasons"][4]["v"]:+.1f}.</li>'
                                     f'<li class="s">He gets out more often under pressure (every {k["pressure"]["pb"] / k["pressure"]["outs"]:.1f} balls vs {k["usual"]["pb"] / k["usual"]["outs"]:.1f}): the price of attacking, already charged in his +{k["pressure"]["v"]:.1f} value.</li>'
-                                    '<li class="s">Overseas slot and an SRH contract: route is a trade (to 9 Dec) or a release. Fallback: Dewald Brevis.</li></ul>'))
+                                    '<li class="s">Overseas slot and an SRH contract: route is a trade (to 9 Dec) or a release. Fallback: Rovman Powell.</li></ul>'))
     return slide(n, "Annexure B · The player pick we are backing", "REPRODUCE", "".join(b),
                  notes="Heinrich Klaasen: the strongest data match for RR's biggest batting gap, middle-overs pressure against spin.")
 
@@ -782,8 +855,8 @@ def s_annex_war(n):
     g = Graph()
     moments = [("w1", "bug", "The result that looked too good", "Solution A v3 jumped to 0.31 reliability. A diagnostic showed it was measuring match context, not skill.", "Dropped it, even though it flattered us.", C["bad"]),
                ("w2", "swap", "Two teams, no winner", "Solution A and B were built separately. On the same unseen matches, A won on dismissals, B on strike rate.", "Wrote the selection rule first, then ran the tournament.", C["warn"]),
-               ("w3", "users", "\"Why isn't Archer in?\"", "RR's own strike bowler came out #45. Tempting to nudge him in.", "Stayed with the data; added a clearly labelled watchlist instead.", C["blue"]),
-               ("w4", "alert", "Dashboard ≠ report", "A judge-facing chart showed Vaibhav at +76.9; the report said +48.7. Two pressure definitions had crept in.", "Unified on the report's definition; built a verifier: 10,172 checks, 0 failed.", C["pink"])]
+               ("w3", "users", "\"Why isn't Archer in?\"", f"RR's own strike bowler came out #{next(r for r in D['watch']['rr'] if r['name'] == 'Jofra Archer')['official']}. Tempting to nudge him in.", "Stayed with the data; added a clearly labelled watchlist instead.", C["blue"]),
+               ("w4", "alert", "Dashboard ≠ report", "A judge-facing chart showed a different value for Vaibhav than the report did. Two pressure definitions had crept in.", f"Unified on the report's definition; built a verifier: {CHECKS} checks, 0 failed.", C["pink"])]
     for i, (k_, ic, a, what, did, colr) in enumerate(moments):
         x = 34 + i * 386
         g.node(k_, x, 110, 360, 290, f'<div style="width:56px;height:56px;border-radius:14px;background:{C["panel2"]};display:grid;place-items:center;margin-bottom:12px">{icon(ic, 28, colr)}</div>'
@@ -794,11 +867,11 @@ def s_annex_war(n):
     b.append(g.render())
     b.append(card(34, 424, 1532, 428, ""))
     b.append(pill(54, 440, 470, "THE EASY ANSWER VS WHAT WE SHIPPED", C["jersey"], 32, 14))
-    rows = [("Pressure definition", "Overs 17–20 + required rate 9+ (the obvious rule)", "Win-probability leverage, validated (2.06× decisive share)"),
+    rows = [("Pressure definition", "Overs 17–20 + required rate 9+ (the obvious rule)", f"Win-probability leverage, validated ({DEC} decisive share)"),
             ("Rating", "Raw pressure strike rate", "Context-adjusted value, shrunk, + pressure SR, chosen on unseen matches"),
             ("Best-looking version", "A v3 (0.31 reliability)", "Rejected: it measured context"),
             ("RR's own players", "Nudge Archer into the top 10", "Official list untouched; watchlist + RR review shown separately"),
-            ("Dashboard numbers", "Two pressure definitions mixed", "Generated from the pipeline and checked: 10,172 checks"),
+            ("Dashboard numbers", "Two pressure definitions mixed", f"Generated from the pipeline and checked: {CHECKS} checks"),
             ("Choosing the method", "Pick the version we liked best", "Pre-stated rule on 16 held-out cells: best worst case, then best mean")]
     b.append(box(54, 492, 1492, 0, '<table class="t" style="font-size:15px"><tr><th style="width:22%">Decision</th><th style="width:36%;background:#7a1f3d">Easy answer</th><th style="background:#14532d">Shipped</th></tr>'
                                     + "".join(f'<tr><td><b>{a}</b></td><td class="m">{x}</td><td>{y}</td></tr>' for a, x, y in rows) + '</table>'))

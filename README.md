@@ -33,18 +33,35 @@ This repository holds everything needed to reproduce our submission from the raw
 | # | Batters | Bowlers |
 |---|---|---|
 | 1 | Vaibhav Sooryavanshi | Josh Hazlewood |
-| 2 | Priyansh Arya | Mujeeb Ur Rahman |
-| 3 | Heinrich Klaasen | Mohsin Khan |
-| 4 | Abhishek Sharma | Abrar Ahmed |
-| 5 | Suryakumar Yadav | Jasprit Bumrah |
-| 6 | Travis Head | Mahedi Hasan |
-| 7 | Rovman Powell | Varun Chakravarthy |
-| 8 | Finn Allen | Taskin Ahmed |
-| 9 | Phil Salt | Mohammad Nawaz |
-| 10 | Dewald Brevis | Haris Rauf |
+| 2 | Tim David | Jasprit Bumrah |
+| 3 | Abhishek Sharma | Taskin Ahmed |
+| 4 | Phil Salt | Mujeeb Ur Rahman |
+| 5 | Rovman Powell | Abrar Ahmed |
+| 6 | Travis Head | Lockie Ferguson |
+| 7 | Heinrich Klaasen | Mustafizur Rahman |
+| 8 | Suryakumar Yadav | Rashid Khan |
+| 9 | Tim Seifert | Varun Chakravarthy |
+| 10 | Josh Inglis | Sunil Narine |
 
 Source of truth: [`pipeline/outputs/FINAL_TOP10_HYBRID.csv`](pipeline/outputs/FINAL_TOP10_HYBRID.csv).
 Full method and evidence: [`pipeline/outputs/SupeRR_Selector_Round1_HYBRID_Methodology_Report.pdf`](pipeline/outputs/SupeRR_Selector_Round1_HYBRID_Methodology_Report.pdf).
+
+### Data update (November 2026)
+
+All results in this repository come from the **updated `ball_by_ball.csv`** (the single source of truth). Compared with
+the first copy, two things changed:
+
+- `extras1_runs` now holds the real extra runs on each ball (for example 5 for a wide that ran away for four byes);
+  the first copy held a code for the extras type. Team totals are now `runs + extras1_runs + extras_2_runs`, and
+  bowlers are charged `runs + extras1_runs` on wides and no-balls. Rebuilt scores now reconcile with the official
+  results: 404 of 406 winning chases (99.5%) reach their target, against 74% before; the two exceptions are
+  rain-reduced DLS matches whose revised target is not in the feed. "Won by X runs" margins match exactly in 99.5%
+  of matches.
+- One player name was standardised (AHT Donald → Aneurin Donald).
+
+The whole pipeline, report, dashboard, deck and guide were re-run on the updated file. Because team runs, bowler
+runs and the win-probability states changed, the held-out tournament picked a slightly different batter recipe and
+several places in both lists changed.
 
 ---
 
@@ -115,7 +132,7 @@ so `git status` / `git diff` afterwards shows whether anything changed.
 We checked this from a clean clone: deleting `pipeline/outputs/` and rerunning reproduced all 40 data files,
 tables and figures exactly. The report PDF's text was identical on all 10 pages; only its embedded creation
 timestamp differs, so git will show the PDF as changed. The `hyb_*log.txt` files are saved console logs
-from our original run and are not rewritten.
+from the run on the updated data; the pipeline does not rewrite them.
 
 To run the steps by hand instead:
 
@@ -137,7 +154,7 @@ python3 s09_hybrid_report.py   # methodology report (PDF)
 | s02 | `deliveries_pressure.parquet`, `wp_model_metrics.csv`, `wp_calibration.csv` |
 | s03 | `deliveries_value.parquet` |
 | s05 | `val_*.csv`, `weights.json` |
-| s04 | `ratings_bat.csv`, `ratings_bowl.csv` |
+| s04 | `ratings_bat.csv`, `ratings_bowl.csv`, `shrinkage_k.json` |
 | s07 | `hyb_selection.csv`, `hyb_cells_*.csv`, `hyb_tournament_raw.csv`, `hyb_chosen.json` |
 | s08 | **`FINAL_TOP10_HYBRID.csv`**, `hyb_ratings_*.csv`, `hyb_specs_*.csv`, `hyb_evidence_*.csv` |
 | s09 | `SupeRR_Selector_Round1_HYBRID_Methodology_Report.pdf`, `figures/` |
@@ -145,10 +162,10 @@ python3 s09_hybrid_report.py   # methodology report (PDF)
 ### 5. Check the results
 
 - `pipeline/outputs/FINAL_TOP10_HYBRID.csv` should match the table at the top of this page.
-- `./reproduce.sh` ends with `10172 checks, 0 failed` from the dashboard verifier, which recomputes every
+- `./reproduce.sh` ends with `... checks, 0 failed` (about 10,000 checks) from the dashboard verifier, which recomputes every
   dashboard number from `deliveries_value.parquet` and the rating tables, and checks the methodology claims
   against the PDF text.
-- Win-probability model quality (`wp_model_metrics.csv`): AUC 0.706 (1st innings), 0.896 (2nd innings).
+- Win-probability model quality (`wp_model_metrics.csv`): AUC 0.705 (1st innings), 0.898 (2nd innings).
 
 ---
 
@@ -195,7 +212,7 @@ pip install qrcode playwright && python3 -m playwright install chromium
 3. **Ratings.** Each player's pressure value is shrunk towards the league average according to sample size
    (Empirical Bayes), and compared with the same player's routine level, so a high rating means good under
    pressure, not just good overall. Eligibility: at least 150 pressure balls, 12 matches and 150 routine balls.
-4. **Choosing the method.** Two complete solutions (A and B) and 45 blends were scored on matches they had not
+4. **Choosing the method.** Two complete solutions (A and B) and 79 candidate methods per role were scored on matches they had not
    seen. The blend that held up best for each role became the final method (`hyb_chosen.json`).
 5. **Stability.** 300 bootstrap resamples report how often each player stays in the top 10.
 
@@ -212,9 +229,10 @@ reproduce.sh            one-command end-to-end run
 data/raw/               the six raw CSVs provided for the round
 pipeline/
   run_all.sh            pipeline steps in order
-  src/                  config.py, s01..s09 steps, ratings.py, hybrid.py
+  src/                  config.py, s01..s09 steps, ratings.py, hybrid.py, recipes.py
   docs/                 development logs used in the report's iteration section
   outputs/              committed results (parquet, CSV, JSON, figures, PDF report)
+report/                 plain-English complete guide (PDF) and its builder
 deck/                   presentation source: prep.py (numbers), deck.py + charts.py (slides as HTML/SVG), make_deck.sh
 dashboard/
   index.html, css/, js/ dashboard source (vanilla JS + SVG, no build tools)

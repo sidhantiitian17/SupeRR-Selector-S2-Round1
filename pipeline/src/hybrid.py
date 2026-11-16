@@ -139,3 +139,6 @@ def targets(y, role):
         for k, v in T.items():
             out[f"{lab} | {k}"] = v[n >= 30]
     return pd.DataFrame(out)
+
+
+from recipes import describe, components  # noqa: E402,F401  (re-exported)

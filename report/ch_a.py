@@ -1,5 +1,6 @@
 """Cover, contents and chapters 1-7: the question, the data, cleaning, the plan, defining and checking pressure."""
 from rlib import *
+WPM = D["wp_metrics"]
 
 
 def cover():
@@ -22,7 +23,7 @@ def cover():
   <div style="font-size:12pt;line-height:1.5;color:#e9e4f0;margin-top:14px">From six raw CSV files to the most reliable T20 players under pressure, and what they mean for <b>Rajasthan Royals</b> at the <b>IPL 2027 auction</b>. Every step, every formula, every mistake, in plain English.</div>
   <div style="display:flex;gap:6mm;margin-top:12mm">{imgs}</div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:5mm;margin-top:10mm">
-    {"".join(f'<div style="border:1px solid #3a3048;border-radius:12px;padding:10px 12px"><div style="font-family:Archivo;font-weight:900;font-size:20pt;color:{PINK}">{a}</div><div style="font-size:9pt;color:#a39bb3">{b}</div></div>' for a, b in [("837", "matches, IPL + T20I, 2022–26"), ("193,988", "deliveries rebuilt and modelled"), ("10 + 10", "most reliable batters and bowlers"), ("10,172", "dashboard numbers checked, 0 failed")])}
+    {"".join(f'<div style="border:1px solid #3a3048;border-radius:12px;padding:10px 12px"><div style="font-family:Archivo;font-weight:900;font-size:20pt;color:{PINK}">{a}</div><div style="font-size:9pt;color:#a39bb3">{b}</div></div>' for a, b in [(str(D["n_matches"]), "matches, IPL + T20I, 2022–26"), (f'{D["n_balls"]:,}', "deliveries rebuilt and modelled"), ("10 + 10", "most reliable batters and bowlers"), (CHECKS, "dashboard numbers checked, 0 failed")])}
   </div>
   <div style="font-size:9pt;color:#a39bb3;margin-top:10mm;line-height:1.7">Live dashboard · superr-under-pressure-rating.vercel.app<br>Code, data, results · github.com/sidhantiitian17/SupeRR-Selector-S2-Round1</div>
 </div></div>"""
@@ -132,13 +133,13 @@ def ch2():
         ["Matches", "883 matches in <code>matches.csv</code>, but only 867 have balls.", "16 matches have no ball-by-ball rows, so there is nothing to analyse for them."],
         ["Innings numbers", "Innings 1 and 2 hold 200,961 balls; innings 3 and 4 hold 38 balls.", "Innings 3/4 are Super Overs. They follow different rules, so we dropped them."],
         ["Extras", "wide 7,714 · leg-byes 2,748 · no-ball (\"Overstep\") 576 · byes 529 · other no-balls 264 · penalty 1", "Wides and no-balls are not legal balls; we must count them separately."],
-        ["Extra runs", "The column <code>extras1_runs</code> holds a code, not runs. Runs beyond the first on a wide, bye or leg-bye are missing.", "We can rebuild most scores, but chases will often come out a run or two short (checked in Chapter 3)."],
+        ["Extra runs", "<code>extras1_runs</code> holds the extra runs on the ball (a wide that runs away for four byes shows 5); <code>extras_2_runs</code> holds byes taken off a no-ball.", "Team score = bat runs + both extras columns. We check this against the results in Chapter 3."],
         ["Dismissals", "Caught 7,557 · Bowled 1,775 · LBW 709 · Run out 600 · Stumped 214 · Hit wicket 17 · Retired out 6 · Obstructing 3", "Run outs and retirements are not the bowler's wicket. We separate bowler wickets from team wickets."],
         ["Pace or spin", "Pace 123,886 balls, spin 77,113.", "Useful context: we can compare players against pace and spin separately."],
         ["Ball speed", "<code>bowl_speed</code> is 0 in 38.7% of rows.", "Too patchy to use. We ignored it."],
         ["Results", "40 matches abandoned or no result; 74 results mention a tie or Super Over; 23 matches had a rain-revised target; 31 were knock-outs.", "No-result and tie matches cannot teach a win model who won. Rain rules change the target and the number of balls."]])}
 {box("kid", "<p>Opening data is like unpacking a box of LEGO before building. You count the pieces, check the instructions are the right ones, and notice that a few pieces are missing. If you start building straight away, you find out halfway through that the wheel is not there.</p>")}
-{box("warn", "<p>The column <code>extras1_runs</code> sounds like \"extra runs\", but its values are a code for the extras type (a wide showing 6 makes no sense as runs). Lesson: never trust a column name; look at the values next to each other before using a column.</p>")}
+{box("warn", "<p>War-room lesson: an earlier copy of this file stored a <i>code</i> for the extras type in <code>extras1_runs</code> (every normal ball showed 6), so extra runs had to be approximated. The organisers' updated file holds real runs, and the whole analysis in this guide is re-run on it. Lesson: never trust a column name; look at the values next to each other, and test the rebuilt scores against the official results.</p>")}
 <h2>The shape of the data after scoping</h2>
 <p>After removing Super Overs and the two A-team events, we kept <b>837 matches</b> and <b>193,988 deliveries</b>: 87,673 IPL balls and 106,315 T20I balls, played by 824 different batters and 596 different bowlers from 2022 to 2026.</p>
 {fig(panel("Matches per year", "IPL vs T20I after scoping", ch.stacked_bars(bars, 600, 260, legend=[("IPL", PINK), ("T20I", BLUE)]), 600, 260),
@@ -170,9 +171,9 @@ def ch3():
 <h2>Step 2: three different run counts</h2>
 <p>The same delivery means different things to the team, the batter and the bowler, so we count runs three ways:</p>
 {table(["Count", "Formula", "Why"], [
-        ["Team runs", "bat runs + extra runs + 1 for a wide or no-ball + 1 for a bye or leg-bye (approximate) + 5 for a penalty", "Needed to rebuild the score."],
+        ["Team runs", "bat runs + <code>extras1_runs</code> (wides, no-ball penalty, byes, leg-byes, penalty runs) + <code>extras_2_runs</code> (byes off a no-ball)", "Needed to rebuild the score."],
         ["Batter runs", "runs off the bat only", "A batter is not credited with wides or byes."],
-        ["Bowler runs", "bat runs + 1 for a wide or no-ball", "Byes and leg-byes are the keeper's or nobody's fault, so the bowler is not charged."]])}
+        ["Bowler runs", "bat runs + all runs from a wide + the no-ball penalty", "Byes and leg-byes are the keeper's or nobody's fault, so the bowler is not charged."]])}
 <h2>Step 3: three different wickets</h2>
 <ul><li><b>Team wicket</b>: any dismissal except \"retired out\" (it reduces wickets in hand).</li>
 <li><b>Batter out</b>: the striker himself was dismissed (in a run out, sometimes the non-striker is out instead).</li>
@@ -188,8 +189,8 @@ def ch3():
 <p>Rinku Singh needed 1 run off 3 balls after a dot ball, and hit a six. The rebuilt state makes it possible to say exactly how much that moment mattered.</p>
 <h2>Step 5: a quality check we could not skip</h2>
 <p>If the rebuilding is right, every chase the batting team won should reach the target. We tested this on all winning chases.</p>
-{stats([("73.9%", "of winning chases reach the target exactly when rebuilt"), ("≈1.1", "runs short on average for the rest"), ("Why", "extra runs beyond the first on wides/byes are missing in the feed"), ("Effect", "tiny; state is off by about a run late in some chases")])}
-{box("warn", "<p>This is a limit of the data, not a bug we can fix. A missing run moves the required rate very slightly. It is listed again in the limitations (Chapter 21).</p>")}
+{stats([("99.5%", "of winning chases reach the target when rebuilt (404 of 406)"), ("2", "exceptions, both rain-reduced DLS games"), ("Why", "the feed does not store those two revised targets"), ("Effect", "negligible; every other chase state is exact")])}
+{box("why", "<p>We also checked the other direction: when the team batting first won \"by X runs\", the rebuilt totals give exactly X in 99.5% of matches. So the extras are now counted correctly.</p>")}
 <h2>Step 6: who won? (the label)</h2>
 <p>For every ball we store whether the batting team went on to win. Ties and no-results get no label: a model learning \"who wins from here\" should not learn from matches nobody won.</p>
 {box("kid", "<p>Cleaning is like writing the score on a whiteboard after every single ball. The raw file only tells you what happened on each ball. We replay the match in order and keep the whiteboard up to date, so for any ball we can read off \"KKR need 1 off 3, 6 down\".</p>")}
@@ -210,7 +211,7 @@ def ch4():
          ("s03", "s03 Value", "expected outcomes, wicket cost, value per ball", "b", 350, 10), ("s05", "s05 Validate", "definitions, thresholds, reliability → weights", "v", 520, 10),
          ("s04", "s04 Solution A", "context-adjusted shrunk ratings", "b", 520, 120), ("B", "Solution B", "pressure SR, economy + WPA", "v", 350, 120),
          ("s07", "s07 Tournament", "79 candidates × 36 splits, unseen matches", "p", 180, 120), ("s08", "s08 Final lists", "bootstrap + specification checks", "g", 10, 120),
-         ("s09", "s09 Report", "methodology PDF", "n", 10, 225), ("dash", "Dashboard + verifier", "10,172 checks", "j", 180, 225), ("deck", "Deck + this guide", "", "n", 350, 225)]
+         ("s09", "s09 Report", "methodology PDF", "n", 10, 225), ("dash", "Dashboard + verifier", f"{CHECKS} checks", "j", 180, 225), ("deck", "Deck + this guide", "", "n", 350, 225)]
     for k, a, b_, kind, x, y in S:
         pipe.node(k, x, y, 150, 74, a, b_, kind)
     pipe.edge("s01", "s02").edge("s02", "s03").edge("s03", "s05").edge("s05", "s04", "b", "t").edge("s04", "s07", "l", "r", ta=0.3, tb=0.3)
@@ -246,7 +247,7 @@ def ch5():
     att.edge("a1", "a2", label="too blunt").edge("a2", "a3", label="weights are guesses")
     att.text(10, 170, "Flags 42% of balls; treats every death over the same.", 10, BAD)
     att.text(240, 170, "Better, but the weights are our opinion.", 10, WARN)
-    att.text(470, 170, "Chosen: 2.06× its share of decisive swing.", 10, GOOD)
+    att.text(470, 170, f"Chosen: {DEC}× its share of decisive swing.", 10, GOOD)
     cv = Flow(680, 170)
     for i in range(5):
         for j in range(5):
@@ -278,7 +279,7 @@ def ch5():
 <p>If a model is trained on a match and then asked about that same match, it already \"knows\" the ending. So we split the 837 matches into five groups. Each group's balls are scored by a model trained only on the other four groups. Every ball's win probability is therefore <b>out-of-fold</b>: produced by a model that never saw that match.</p>
 {fig(cv.svg(), "<b>Figure 5.1</b> Five-fold cross-validation grouped by match. Each round, one fifth of the matches (pink) is scored by a model trained on the rest.")}
 <h3>Is the model any good?</h3>
-{stats([("0.896", "AUC in chases: the model ranks winners above losers 90% of the time"), ("0.706", "AUC in first innings: harder, no target yet"), ("0.132", "Brier score in chases (0 = perfect, 0.25 = coin flip)"), ("0.218", "Brier score in first innings")])}
+{stats([(f'{WPM[1]["auc"]:.3f}', f'AUC in chases: the model ranks winners above losers {WPM[1]["auc"]:.0%} of the time'), (f'{WPM[0]["auc"]:.3f}', "AUC in first innings: harder, no target yet"), (f'{WPM[1]["brier"]:.3f}', "Brier score in chases (0 = perfect, 0.25 = coin flip)"), (f'{WPM[0]["brier"]:.3f}', "Brier score in first innings")])}
 {box("math", "<p><b>AUC</b> = pick a random ball from a team that went on to win and one from a team that lost. AUC is the chance the model gave the winner the higher probability. 0.5 is guessing, 1.0 is perfect.</p><p><b>Brier score</b> = average of (predicted probability − what happened)², where what happened is 1 or 0. Lower is better.</p><p><b>Calibration</b> = when the model says 70%, does the team win about 70% of the time? Figure 5.2 checks this.</p>")}
 {fig('<div class="grid2">' + panel("Calibration", "predicted (x) vs actual win rate (y)", ch.calibration(cal, 320, 300), 320, 300) + box("why", "<p>Points close to the diagonal mean the probabilities can be taken at face value. The chase line hugs the diagonal. The first-innings line drifts below it at the top (when the model says 94% the team wins about 87% of the time), so first-innings pressure is flatter and less certain. We report this rather than hide it.</p><p>First innings is genuinely harder: without a target, nobody knows yet what a good score is.</p>") + '</div>',
          "<b>Figure 5.2</b> Calibration of the win-probability models (10 bins, out-of-fold). Pink = chase, blue = first innings.")}
@@ -335,18 +336,18 @@ def ch7():
                    "A definition of pressure is only useful if the balls it flags really are the ones that decide matches. We tested all three definitions on the same yardstick.") + f"""
 <h2>Test 1: does it find the decisive balls?</h2>
 <p>For every ball we know how much the win probability actually moved (the <b>win probability added</b>, WPA). Add up the size of all those moves and you have the total \"match-deciding swing\" in the data. A good definition should catch much more than its fair share of that swing.</p>
-{box("math", eq("decisiveness = (share of all |WPA| that falls on flagged balls) / (share of balls flagged)") + "<p>If a definition flags 30% of balls and those balls hold 30% of the swing, its decisiveness is 1.0 (no better than picking at random). Ours flags 30% of balls holding 62% of the swing: 0.62 / 0.30 = <b>2.06</b>.</p>")}
+{box("math", eq("decisiveness = (share of all |WPA| that falls on flagged balls) / (share of balls flagged)") + f"<p>If a definition flags 30% of balls and those balls hold 30% of the swing, its decisiveness is 1.0 (no better than picking at random). Ours flags 30% of balls holding {DEF0['share of total |WPA| in flagged balls'] * 100:.0f}% of the swing: {DEF0['share of total |WPA| in flagged balls']:.3f} / 0.30 = <b>{DEC}</b>.</p>")}
 {fig(panel("Share of match-deciding swing caught", "and the ratio to the share of balls flagged", ch.def_bars(rows, 640, 260), 640, 260), "<b>Figure 7.1</b> Leverage catches about twice its share of decisive swing. The two hand-made definitions catch only 1.2–1.3 times their share.")}
 <h2>Test 2: does play actually change on those balls?</h2>
 {table(["Definition", "Balls flagged", "Swing caught", "Decisiveness", "Dismissal % pressure / usual", "Run rate pressure / usual", "Boundary % pressure / usual"], beh)}
-<p>Two lessons hide in this table. Under our definition, <b>pressure balls are not slower</b>: the run rate is a little higher (9.12 vs 8.63) and boundaries are slightly more common. But <b>mistakes cost more</b>: dismissals are a bit more frequent and each one swings the result further. The rule-based definition shows a bigger jump in dismissals only because it is mostly death overs, where everyone slogs. That is a phase effect, not pressure.</p>
+<p>Two lessons hide in this table. Under our definition, <b>pressure balls are not slower</b>: the run rate is a little higher ({DEF0["run rate (pressure)"]:.2f} vs {DEF0["run rate (routine)"]:.2f}) and boundaries are slightly more common. But <b>mistakes cost more</b>: dismissals are a bit more frequent and each one swings the result further. The rule-based definition shows a bigger jump in dismissals only because it is mostly death overs, where everyone slogs. That is a phase effect, not pressure.</p>
 {box("kid", "<p>A metal detector that beeps at everything is useless, and so is one that never beeps. The decisiveness test asks: when our detector beeps, how often is there really treasure? Ours finds about twice as much treasure per beep as the other two.</p>")}
 <h2>Test 3: how big should the pressure group be?</h2>
 <p>We computed every player's pressure rating twice, on two random halves of the matches, and measured how well the two halves agreed (split-half reliability, explained fully in Chapter 11). We repeated this for cut-offs from the top 40% to the top 15%. This test used a looser minimum (100 pressure balls, 8 matches), so it keeps more players than the final eligibility rule.</p>
 {th}
-{fig(panel("Reliability by cut-off", "split-half Spearman ρ of player pressure ratings", ch.threshold(D["threshold"], 640, 260), 640, 260), "<b>Figure 7.2</b> Reliability sits on a plateau around ρ ≈ 0.23–0.33 for every cut-off. A smaller group does not make ratings more repeatable; it just leaves fewer eligible players.")}
+{fig(panel("Reliability by cut-off", "split-half Spearman ρ of player pressure ratings", ch.threshold(D["threshold"], 640, 260), 640, 260), f"<b>Figure 7.2</b> Reliability sits on a plateau around ρ ≈ {min(t['quality_rho'] for t in D['threshold']):.2f}–{max(t['quality_rho'] for t in D['threshold']):.2f} for every cut-off. A smaller group does not make ratings more repeatable; it just leaves fewer eligible players.")}
 {box("why", "<p>Because reliability is flat, the cut-off should keep as many qualified players as possible while still being clearly \"pressure\". The top 30% keeps about 150 players per role and is where both batters and bowlers are near the top of the plateau. The top 15% would leave only about 90 players, which removes many genuine regulars.</p>")}
 <h2>Where the pressure balls are</h2>
-{stats([("35%", "of pressure balls are in the powerplay"), ("41%", "in the middle overs"), ("23%", "at the death"), ("58,197", "pressure balls in total")])}
+{stats([(f'{D["hp_phase_share"]["PP"]:.0f}%', "of pressure balls are in the powerplay"), (f'{D["hp_phase_share"]["MID"]:.0f}%', "in the middle overs"), (f'{D["hp_phase_share"]["DEATH"]:.0f}%', "at the death"), ("58,197", "pressure balls in total")])}
 <p>This surprises most people. Pressure is not only a death-overs thing: an early wicket in a big chase, or a tight middle-overs squeeze, can matter as much as the 19th over. This is the clearest evidence that the rule-based definition (\"death overs = pressure\") was wrong.</p>
 </section>"""

@@ -4,12 +4,23 @@ import base64, html, json, pathlib, sys
 ROOT = pathlib.Path(__file__).resolve().parent
 REPO = ROOT.parent
 sys.path.insert(0, str(REPO / "deck"))
+sys.path.insert(0, str(REPO / "pipeline/src"))
 import lib as dlib          # noqa: E402  (deck palette + icons)
 import charts as ch         # noqa: E402  (dark SVG charts, reused inside dark panels)
 
 esc = html.escape
 D = json.loads((REPO / "deck/build/data.json").read_text())
 OUT = REPO / "pipeline/outputs"
+VER = json.loads((REPO / "dashboard/data/verify_summary.json").read_text())
+CHECKS = f'{VER["checks"]:,}'
+DEF0 = next(d_ for d_ in D["definitions"] if d_["definition"].startswith("PI"))
+DEC = f'{DEF0["decisiveness ratio"]:.2f}'
+KSH = json.loads((OUT / "shrinkage_k.json").read_text())
+SEL = __import__("pandas").read_csv(OUT / "hyb_selection.csv", index_col=0)
+CHOSEN = json.loads((OUT / "hyb_chosen.json").read_text())["chosen"]
+NEAR = {r: len(json.loads((OUT / "hyb_chosen.json").read_text())["near_best"][r]) for r in ("bat", "bowl")}
+G_RR = {(r["side"], r["seg"]): r for r in D["rr_gaps"]}
+ROWSM = D["method"]["rows"]
 
 PINK, MAG, JER, BLUE, VIO = "#f5008f", "#c4007a", "#1f5fd6", "#4c8dff", "#7c5cd6"
 GOOD, BAD, WARN = "#15803d", "#be123c", "#b45309"

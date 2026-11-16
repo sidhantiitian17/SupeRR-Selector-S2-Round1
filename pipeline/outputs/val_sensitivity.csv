@@ -1,37 +1,37 @@
 role,variant,overlap
-bat,pressure = top 35% of balls,9
+bat,pressure = top 35% of balls,8
 bat,pressure = top 25% of balls,7
-bat,pressure = top 20% of balls,3
+bat,pressure = top 20% of balls,7
 bat,weights Q/U/C = 1.00/0.00/0.00,8
 bat,weights Q/U/C = 0.50/0.25/0.25,9
-bat,weights Q/U/C = 0.33/0.33/0.33,7
-bat,weights Q/U/C = 0.60/0.20/0.20,9
-bat,weights Q/U/C = 0.40/0.40/0.20,7
-bat,weights Q/U/C = 0.40/0.20/0.40,9
+bat,weights Q/U/C = 0.33/0.33/0.33,9
+bat,weights Q/U/C = 0.60/0.20/0.20,10
+bat,weights Q/U/C = 0.40/0.40/0.20,9
+bat,weights Q/U/C = 0.40/0.20/0.40,8
 bat,min pressure balls = 120,10
-bat,min pressure balls = 200,8
+bat,min pressure balls = 200,9
 bat,no opposition down-weighting,9
-bat,recency decay (half-life 2 seasons),9
-bat,no knock-out stakes multiplier,9
-bat,WPA/LI lens instead of run value,6
-bat,direct model only (pressure sample only),7
-bat,hierarchical model only,9
-bat,IPL deliveries only,7
-bowl,pressure = top 35% of balls,8
-bowl,pressure = top 25% of balls,9
-bowl,pressure = top 20% of balls,8
-bowl,weights Q/U/C = 1.00/0.00/0.00,6
-bowl,weights Q/U/C = 0.50/0.25/0.25,9
-bowl,weights Q/U/C = 0.33/0.33/0.33,8
+bat,recency decay (half-life 2 seasons),6
+bat,no knock-out stakes multiplier,10
+bat,WPA/LI lens instead of run value,5
+bat,direct model only (pressure sample only),8
+bat,hierarchical model only,7
+bat,IPL deliveries only,4
+bowl,pressure = top 35% of balls,9
+bowl,pressure = top 25% of balls,8
+bowl,pressure = top 20% of balls,9
+bowl,weights Q/U/C = 1.00/0.00/0.00,9
+bowl,weights Q/U/C = 0.50/0.25/0.25,8
+bowl,weights Q/U/C = 0.33/0.33/0.33,6
 bowl,weights Q/U/C = 0.60/0.20/0.20,10
 bowl,weights Q/U/C = 0.40/0.40/0.20,7
 bowl,weights Q/U/C = 0.40/0.20/0.40,7
 bowl,min pressure balls = 120,10
 bowl,min pressure balls = 200,10
-bowl,no opposition down-weighting,10
-bowl,recency decay (half-life 2 seasons),7
-bowl,no knock-out stakes multiplier,9
-bowl,WPA/LI lens instead of run value,5
+bowl,no opposition down-weighting,9
+bowl,recency decay (half-life 2 seasons),8
+bowl,no knock-out stakes multiplier,10
+bowl,WPA/LI lens instead of run value,3
 bowl,direct model only (pressure sample only),7
-bowl,hierarchical model only,7
-bowl,IPL deliveries only,5
+bowl,hierarchical model only,9
+bowl,IPL deliveries only,6

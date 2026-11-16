@@ -35,7 +35,7 @@ Run from this folder (`dashboard/`). Needs the Python packages in `../requiremen
 ```bash
 python3 -I scripts/build_data.py       ../pipeline/outputs ../data/raw .   # -> data/clutch_data.js
 python3 -I scripts/build_watchlist.py  ../pipeline/outputs .               # -> data/watchlist.js
-python3 -I scripts/verify_dashboard.py ../pipeline/outputs .               # 10,172 checks, must print "0 failed"
+python3 -I scripts/verify_dashboard.py ../pipeline/outputs .               # ~10,000 checks, must print "0 failed"
 python3 scripts/build_single_file.py                                       # -> dist/under-pressure-rating.html
 ```
 

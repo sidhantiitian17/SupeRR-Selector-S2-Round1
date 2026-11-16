@@ -10,6 +10,9 @@ import json, pathlib, sys, re
 import numpy as np, pandas as pd
 
 OUT, ROOT = pathlib.Path(sys.argv[1]), pathlib.Path(sys.argv[2])
+sys.path.insert(0, str(OUT.parent / "src"))
+from recipes import describe  # noqa: E402
+CH = json.load(open(OUT / "hyb_chosen.json"))["chosen"]
 load = lambda f: (lambda t: json.loads(t[t.index("{"):t.rindex("}") + 1]))((ROOT / f).read_text())
 D, W = load("data/clutch_data.js"), load("data/watchlist.js")
 fails, n_checks = [], 0
@@ -35,7 +38,7 @@ top = pd.read_csv(OUT / "FINAL_TOP10_HYBRID.csv")
 for role, col in (("bat", "batter"), ("bowl", "bowler")):
     R = pd.read_csv(OUT / f"hyb_ratings_{role}.csv").head(120)
     dash = D[role]
-    check(f"{role}: 120 ranked players", len(dash) == 120, len(dash))
+    check(f"{role}: ranked players = min(120, eligible)", len(dash) == len(R), (len(dash), len(R)))
     check(f"{role}: top 10 order = FINAL_TOP10_HYBRID.csv", [p["name"] for p in dash[:10]] == list(top[col]),
           [p["name"] for p in dash[:10]])
     for p, r in zip(dash, R.itertuples()):
@@ -97,7 +100,7 @@ check("deliveries", S["balls"] == len(d), (S["balls"], len(d)))
 check("matches", S["matches"] == d.match_id.nunique(), (S["matches"], d.match_id.nunique()))
 check("years", S["years"] == [int(d.year.min()), int(d.year.max())], S["years"])
 wp = pd.read_csv(OUT / "wp_model_metrics.csv")
-check("WP AUC inn 1 = 0.706", round(float(wp.auc[0]), 3) == 0.706); check("WP AUC inn 2 = 0.896", round(float(wp.auc[1]), 3) == 0.896)
+check("WP AUC inn 1 matches outputs", D["method"]["wp"]["auc1"] == round(float(wp.auc[0]), 3)); check("WP AUC inn 2 matches outputs", D["method"]["wp"]["auc2"] == round(float(wp.auc[1]), 3))
 check("high-pressure threshold", close(D["validation"]["thr_hp"], d.PI.quantile(.70), 1e-3), (D["validation"]["thr_hp"], d.PI.quantile(.70)))
 check("routine threshold", close(D["validation"]["thr_rt"], d.PI.quantile(.50), 1e-3))
 
@@ -106,12 +109,18 @@ from pypdf import PdfReader
 pdf = " ".join(" ".join(pg.extract_text().split()) for pg in PdfReader(str(OUT / "SupeRR_Selector_Round1_HYBRID_Methodology_Report.pdf")).pages)
 _wc = d.groupby("phase").Wc.mean().round(1)
 check("wicket cost in pages.js matches data", f"about {_wc['PP']:.1f} runs in the powerplay, {_wc['MID']:.1f} in the middle, {_wc['DEATH']:.1f} at the death" in (ROOT / "js/pages.js").read_text())
-for claim in ("1.15 in knock-outs", f"{_wc['PP']:.1f} runs in the powerplay", f"{_wc['MID']:.1f} in the middle overs", f"{_wc['DEATH']:.1f} at the death", "0.67 x z(A composite) + 0.33",
-              "0.90 x z[0.2 x z(A rating) + 0.8", "DerSimonian-Laird", "150 pressure balls, 12 matches, 150 usual balls",
-              "30 random half-splits, 6 past-to-future cuts", "8 targets", "837 matches, 193,988 deliveries", "1st innings 0.706, chase 0.896"):
+for claim in ("1.15 in knock-outs", f"{_wc['PP']:.1f} runs in the powerplay", f"{_wc['MID']:.1f} in the middle overs", f"{_wc['DEATH']:.1f} at the death", f"Final batter score = {describe(CH['bat'], 'bat')}",
+              f"Final bowler score = {describe(CH['bowl'], 'bowl')}", "DerSimonian-Laird", "150 pressure balls, 12 matches, 150 usual balls",
+              "30 random half-splits, 6 past-to-future cuts", "8 targets", "837 matches, 193,988 deliveries", f"1st innings {wp.auc[0]:.3f}, chase {wp.auc[1]:.3f}"):
     check(f"report text contains '{claim}'", claim in pdf)
 js = (ROOT / "js/pages.js").read_text()
-check("0.32 / 0.21 SD claims match report", "0.321" in pdf and "0.213" in pdf and "0.32 SD" in js and "0.21 for bowlers" in js)
+_sel = pd.read_csv(OUT / "hyb_selection.csv", index_col=0)
+for _r in ("bat", "bowl"):
+    _g = float(_sel.loc[(_sel.role == _r) & _sel.chosen, "mean_cell"].iloc[0])
+    check(f"{_r} held-out gain in dashboard = selection", abs(D["method"]["gain"][_r] - _g) < 1e-3, (D["method"]["gain"][_r], _g))
+    check(f"{_r} recipe in dashboard = chosen", D["method"]["recipe"][_r] == describe(CH[_r], _r).replace(" x ", " · "))
+check("report states the held-out gains", f"+{D['method']['gain']['bat']:.2f} pool SD for batters" in pdf and f"+{D['method']['gain']['bowl']:.2f} for bowlers" in pdf)
+check("pages.js reads gains and recipes from data", "M.gain.bat" in js and "M.recipe.bat" in js)
 
 # ---------------------------------------------------------------- 6. watchlist: rule holds, numbers recompute
 off10 = {p["id"] for k in ("bat", "bowl") for p in D[k][:10]}
@@ -128,6 +137,14 @@ for r in W["rr"]:
     o = next(p for p in D[r["role"]] if p["id"] == r["id"])
     check(f"RR review {r['name']}: official rank", f"Official #{o['rank']}" in r["text"])
 
+# annexure B text (Reproduce page) vs the data
+_h = d[d.hp]; _y = _h[(_h.kind_ipl == 1) & (_h.year >= 2025) & (_h.phase == "MID") & (_h.is_spin == 1)]
+_sr = lambda q: q.bat_runs.sum() / max(q.faced.sum(), 1) * 100
+_k = _h[(_h.striker_name == "Heinrich Klaasen") & (_h.is_spin == 1)]
+_ks = _h[_h.striker_name == "Heinrich Klaasen"].groupby("year").apply(lambda q: q.bat_val.sum() / q.faced.sum())
+_txt = f"RR strike at {_sr(_y[_y.batting_team_id == 3]):.0f} against spin in middle-overs pressure (league {_sr(_y):.0f}); Klaasen strikes at {_sr(_k):.0f}. Positive in {int((_ks > 0).sum())} of {len(_ks)} seasons"
+check("annexure B numbers on the Reproduce page match the data", _txt in js, _txt)
 print(f"{n_checks} checks, {len(fails)} failed")
+(ROOT / "data/verify_summary.json").write_text(json.dumps({"checks": n_checks, "failed": len(fails)}))
 for f in fails[:40]: print("FAIL", f)
 sys.exit(1 if fails else 0)

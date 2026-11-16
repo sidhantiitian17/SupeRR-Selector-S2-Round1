@@ -12,6 +12,8 @@ import numpy as np
 import pandas as pd
 
 OUT = Path(sys.argv[1]); UP = Path(sys.argv[2]); SITE = Path(sys.argv[3])
+sys.path.insert(0, str(OUT.parent / "src"))
+from recipes import describe  # noqa: E402
 TOPN = 120          # ranked list length shipped to the UI
 SURR_N = 30         # players per role with ball-level arrays for the live Pressure Model explorer
 rng = np.random.default_rng(42)
@@ -287,7 +289,9 @@ meth = dict(
     pdef=[dict(name=str(r[1]), share=round(float(r[2]), 3), wpa=round(float(r[3]), 3), ratio=round(float(r[4]), 2)) for r in pdef.itertuples()],
     rel=[dict(role=r.role, lens=r.value_lens, split=round(float(r.split_half_rho), 3), temporal=None if pd.isna(r.temporal_rho) else round(float(r.temporal_rho), 3))
          for r in rel.itertuples() if r.definition.startswith("PI")],
-    chosen=chosen, weights=wts, tour=tour)
+    chosen=chosen, weights=wts, tour=tour,
+    recipe={r: describe(chosen[r], r).replace(" x ", " · ") for r in ("bat", "bowl")},
+    gain={r: round(float(sel.loc[(sel.role == r) & sel.chosen, "mean_cell"].iloc[0]), 3) for r in ("bat", "bowl")})
 
 # ------------------------------------------------------------------ league-wide summary numbers
 summary = dict(balls=int(len(d)), matches=int(d.match_id.nunique()), ipl=int((d.comp_kind == "IPL").sum()), t20i=int((d.comp_kind == "T20I").sum()),

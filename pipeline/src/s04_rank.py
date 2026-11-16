@@ -29,6 +29,17 @@ def box(d, role, mask):
     return t
 
 
+def write_shrinkage_k(d, hp, rt):
+    """Empirical-Bayes k (balls) for the run and wicket parts on pressure balls, as quoted in the guide."""
+    import json
+    out = {}
+    for role in ("bat", "bowl"):
+        e, _ = rate(d, role, hp=hp, rt=rt, model="direct", weights=(1, 0, 0))
+        out[role] = {"runs": round(float(e.attrs["kH"][0]), 1), "wickets": round(float(e.attrs["kH"][1]), 1)}
+    (OUT / "shrinkage_k.json").write_text(json.dumps(out, indent=1))
+    print("[OK] shrinkage k", out)
+
+
 def main():
     d = load()
     nm = names(d)
@@ -82,6 +93,7 @@ def main():
                         "batter": res["bat"].player.head(10).values,
                         "bowler": res["bowl"].player.head(10).values})
     top.to_csv(OUT / "FINAL_TOP10.csv", index=False)
+    write_shrinkage_k(d, hp, rt)
     print("\n", top.to_string(index=False))
 
 
